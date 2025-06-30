@@ -1,4 +1,5 @@
-import Image from "next/image";
+"use client";
+
 import FaceTracker from "./components/FaceTracker";
 
 /**
@@ -17,7 +18,7 @@ export default function Home() {
       <h1 className="my-10 bg-gradient-to-r from-slate-400 to-gray-500 bg-clip-text text-4xl font-medium tracking-tight text-transparent">
         Virtual Glasses Try-On
       </h1>
-      <div className="h-160 w-160">
+      <div className="size-176">
         <FaceTracker />
       </div>
     </div>
