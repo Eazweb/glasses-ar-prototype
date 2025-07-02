@@ -1,6 +1,7 @@
 "use client";
 
 import FaceTracker from "./components/FaceTracker";
+import Header from "./components/Header";
 
 /**
  * Main page component for the Virtual Glasses Try-On application
@@ -14,13 +15,13 @@ import FaceTracker from "./components/FaceTracker";
  */
 export default function Home() {
   return (
-    <div className="flex h-screen flex-col items-center justify-center">
-      <h1 className="my-10 bg-gradient-to-r from-slate-400 to-gray-500 bg-clip-text text-4xl font-medium tracking-tight text-transparent">
-        Virtual Glasses Try-On
-      </h1>
-      <div className="size-176">
-        <FaceTracker />
+    <>
+      <Header />
+      <div className="flex flex-col items-center justify-center">
+        <div className="mt-12 size-176">
+          <FaceTracker />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

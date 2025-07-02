@@ -6,21 +6,25 @@ interface OverlayControlsProps {
   showAll: boolean;
   showEyes: boolean;
   showMask: boolean;
+  showGlasses: boolean;
   onToggleAll: () => void;
   onToggleEyes: () => void;
   onToggleMask: () => void;
+  onToggleGlasses: () => void;
 }
 
 export default function OverlayControls({
   showAll,
   showEyes,
   showMask,
+  showGlasses,
   onToggleAll,
   onToggleEyes,
   onToggleMask,
+  onToggleGlasses,
 }: OverlayControlsProps) {
   return (
-    <div className="bg-opacity-50 absolute top-4 right-4 z-30 flex flex-col gap-2 rounded bg-black p-3">
+    <div className="absolute top-4 right-4 z-30 flex flex-col gap-2 rounded-lg bg-black/60 p-3 backdrop-blur-lg">
       <label className="inline-flex items-center text-white">
         <input
           type="checkbox"
@@ -47,6 +51,15 @@ export default function OverlayControls({
           className="mr-2"
         />
         Face Mask
+      </label>
+      <label className="inline-flex items-center text-white">
+        <input
+          type="checkbox"
+          checked={showGlasses}
+          onChange={onToggleGlasses}
+          className="mr-2"
+        />
+        Glasses
       </label>
     </div>
   );

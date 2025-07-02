@@ -1,0 +1,3 @@
+export const GLASSES_EYEDISTANCE_MULTIPLIER_2D = 1.5;
+
+export const EYE_MARKER_RADIUS_2D = 3;
