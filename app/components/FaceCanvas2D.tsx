@@ -1,9 +1,9 @@
 "use client";
 import React, { useRef, useEffect } from "react";
-import { drawEyeMarkers2D } from "../utils/drawing/drawEyeMarkers2D";
-import { drawFaceMask2D } from "../utils/drawing/drawFaceMask2D";
-import { drawAllLandmarks2D } from "../utils/drawing/drawAllLandmarks2D";
-import { drawPngGlasses2D } from "../utils/drawing/drawPngGlasses2D";
+import { drawEyeMarkers2D } from "../utils/drawing2D/drawEyeMarkers2D";
+import { drawFaceMask2D } from "../utils/drawing2D/drawFaceMask2D";
+import { drawAllLandmarks2D } from "../utils/drawing2D/drawAllLandmarks2D";
+import { drawPngGlasses2D } from "../utils/drawing2D/drawPngGlasses2D";
 import { convertLandmarks } from "../utils/landmarkConversion";
 import { useGlassesImage } from "../hooks/useGlassesImage";
 import { FaceCanvas2DProps } from "../types/faceCanvas2D";
@@ -92,5 +92,5 @@ export default function FaceCanvas2D({
     glassesError,
   ]);
 
-  return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full" />;
+  return <canvas ref={canvasRef} className="w-full" />;
 }

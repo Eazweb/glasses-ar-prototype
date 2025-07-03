@@ -11,6 +11,8 @@ interface OverlayControlsProps {
   onToggleEyes: () => void;
   onToggleMask: () => void;
   onToggleGlasses: () => void;
+  fps3D?: number;
+  setFps3D?: (fps: number) => void;
 }
 
 export default function OverlayControls({
@@ -22,6 +24,8 @@ export default function OverlayControls({
   onToggleEyes,
   onToggleMask,
   onToggleGlasses,
+  fps3D,
+  setFps3D,
 }: OverlayControlsProps) {
   return (
     <div className="absolute top-4 right-4 z-30 flex flex-col gap-2 rounded-lg bg-black/60 p-3 backdrop-blur-lg">
@@ -61,6 +65,26 @@ export default function OverlayControls({
         />
         Glasses
       </label>
+
+      {/* FPS Control for 3D */}
+      {fps3D !== undefined && setFps3D && (
+        <div className="mt-2 border-t border-white/20 pt-2">
+          <label className="text-sm text-white">3D FPS: {fps3D}</label>
+          <input
+            type="range"
+            min="1"
+            max="60"
+            value={fps3D}
+            onChange={(e) => setFps3D(Number(e.target.value))}
+            className="mt-1 w-full"
+          />
+          <div className="mt-1 flex justify-between text-xs text-white/70">
+            <span>1</span>
+            <span>30</span>
+            <span>60</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
