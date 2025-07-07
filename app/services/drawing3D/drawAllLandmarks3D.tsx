@@ -1,25 +1,19 @@
 // utils/drawing/drawAllLandmarks3D.tsx
 import React from "react";
+import { landmarkToWorld } from "../../utils/landmarkToWorld";
 
 /**
  * Renders small white dots at every landmark using efficient points rendering.
  * @param landmarks Array of normalized {x,y} landmarks
- * @param scaleX X-axis scaling factor
- * @param scaleY Y-axis scaling factor
- * @param zDepth Z-position depth
  */
 export function drawAllLandmarks3D(
-  landmarks: { x: number; y: number }[],
-  scaleX: number = 2,
-  scaleY: number = 1.5,
-  zDepth: number = 0.01,
+  landmarks: { x: number; y: number; z?: number }[],
 ) {
-  // Convert landmarks to 3D positions
-  const positions = landmarks.map((pt) => [
-    (pt.x - 0.5) * scaleX,
-    -(pt.y - 0.5) * scaleY,
-    zDepth,
-  ]);
+  // Convert landmarks to 3D positions using unified coordinate system
+  const positions = landmarks.map((pt) => {
+    const worldPos = landmarkToWorld(pt);
+    return [worldPos.x, worldPos.y, worldPos.z];
+  });
 
   return (
     <points>
@@ -30,7 +24,7 @@ export function drawAllLandmarks3D(
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.005}
+        size={0.008}
         color="white"
         sizeAttenuation={true}
         transparent={true}

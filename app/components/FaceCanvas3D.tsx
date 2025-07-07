@@ -4,11 +4,13 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
 import * as THREE from "three";
 import { useVideoTexture } from "../hooks/useVideoTexture";
-import { convertLandmarks } from "../utils/landmarkConversion";
-import { drawAllLandmarks3D } from "../utils/drawing3D/drawAllLandmarks3D";
-import { drawEyeMarkers3D } from "../utils/drawing3D/drawEyeMarkers3D";
-import { drawFaceMask3D } from "../utils/drawing3D/drawFaceMask3D";
+import { convertLandmarks3D } from "../utils/landmarkConversion";
+import { drawAllLandmarks3D } from "../services/drawing3D/drawAllLandmarks3D";
+import { drawEyeMarkers3D } from "../services/drawing3D/drawEyeMarkers3D";
+import { drawFaceMask3D } from "../services/drawing3D/drawFaceMask3D";
+import { drawCenterGrid3D } from "../services/drawing3D/drawCenterGrid3D";
 import { FaceCanvas3DProps } from "../types/faceCanvas3D";
+import { DrawGlasses3D } from "../services/drawing3D/drawGlasses3D";
 
 export default function FaceCanvas3D({
   videoRef,
@@ -18,6 +20,7 @@ export default function FaceCanvas3D({
   showEyes,
   showMask,
   showGlasses,
+  showGrid,
   videoTextureVersion,
   fps,
 }: FaceCanvas3DProps) {
@@ -43,11 +46,13 @@ export default function FaceCanvas3D({
 
   const convertedLandmarks = useMemo(
     () => {
-      const result = convertLandmarks(landmarks.current);
+      const result = convertLandmarks3D(landmarks.current);
       return result;
     },
     [landmarkVersion], // Force update when version changes
   );
+
+  // const convertedLandmarks = landmarks.current;
 
   const videoTexture = useVideoTexture(
     videoRef,
@@ -60,7 +65,7 @@ export default function FaceCanvas3D({
       {/* <video ref={videoRef} className="hidden" playsInline muted autoPlay /> */}
       <Canvas
         className="absolute top-0 left-0 w-full"
-        camera={{ position: [0, 0, 1], fov: 90 }}
+        camera={{ position: [0, 0, 2], fov: 70 }}
         gl={{
           outputColorSpace: THREE.SRGBColorSpace,
           toneMapping: THREE.NoToneMapping,
@@ -70,7 +75,7 @@ export default function FaceCanvas3D({
 
         {/* Show video background - fill entire viewport */}
         {videoTexture && (
-          <mesh scale={[3, 2.25, 1]} position={[0, 0, -0.5]}>
+          <mesh scale={[3.6, 2.7, 1]} position={[0, 0, -1]}>
             <planeGeometry />
             <meshBasicMaterial map={videoTexture} />
           </mesh>
@@ -79,12 +84,17 @@ export default function FaceCanvas3D({
         {/* Render landmarks using points for better performance */}
         {convertedLandmarks.length > 0 && (
           <>
-            {showAll && drawAllLandmarks3D(convertedLandmarks, 2, 1.5, 0.01)}
+            {/* Render all landmarks */}
+            {showAll && drawAllLandmarks3D(convertedLandmarks)}
 
             {/* Render eye markers */}
-            {showEyes && drawEyeMarkers3D(convertedLandmarks, 2, 1.5, 0.01)}
+            {showEyes && drawEyeMarkers3D(convertedLandmarks)}
 
-            {showMask && drawFaceMask3D(convertedLandmarks, 2, 1.5, 0.01)}
+            {/* Render face mask */}
+            {showMask && drawFaceMask3D(convertedLandmarks)}
+
+            {/* Render glasses */}
+            {showGlasses && <DrawGlasses3D landmarks={convertedLandmarks} />}
           </>
         )}
 
@@ -96,8 +106,11 @@ export default function FaceCanvas3D({
           </mesh>
         )} */}
 
+        {/* Center reference grid */}
+        {drawCenterGrid3D(showGrid)}
+
         {/* Debug */}
-        {/* <OrbitControls /> */}
+        <OrbitControls />
       </Canvas>
     </>
   );

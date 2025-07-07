@@ -31,6 +31,7 @@ export default function FaceTracker() {
     showEyes: false,
     showMask: false,
     showGlasses: false,
+    showGrid: false,
   });
 
   // FPS control for 3D rendering
@@ -92,6 +93,7 @@ export default function FaceTracker() {
             showEyes={overlays3D.showEyes}
             showMask={overlays3D.showMask}
             showGlasses={overlays3D.showGlasses}
+            showGrid={overlays3D.showGrid}
             videoTextureVersion={videoTextureVersion}
             fps={fps3D}
           />
@@ -100,6 +102,7 @@ export default function FaceTracker() {
             showEyes={overlays3D.showEyes}
             showMask={overlays3D.showMask}
             showGlasses={overlays3D.showGlasses}
+            showGrid={overlays3D.showGrid}
             onToggleAll={() =>
               setOverlays3D((prev) => ({ ...prev, showAll: !prev.showAll }))
             }
@@ -115,6 +118,12 @@ export default function FaceTracker() {
                 showGlasses: !prev.showGlasses,
               }))
             }
+            onToggleGrid={() =>
+              setOverlays3D((prev) => ({
+                ...prev,
+                showGrid: !prev.showGrid,
+              }))
+            }
             fps3D={fps3D}
             setFps3D={setFps3D}
           />
@@ -124,7 +133,7 @@ export default function FaceTracker() {
       {/* simple mode switch */}
       <button
         onClick={() => setMode((m) => (m === "2D" ? "3D" : "2D"))}
-        className="absolute top-0 right-0 translate-y-[-100%] rounded rounded-b-none bg-neutral-600 px-4 py-2 font-medium text-white"
+        className="absolute top-0 right-0 translate-y-[-100%] rounded bg-neutral-600 px-4 py-2 font-medium text-white"
       >
         {mode === "2D" ? "Switch to 3D" : "Switch to 2D"}
       </button>

@@ -5,7 +5,7 @@ import {
   RIGHT_EYE_INDICES,
   NOSE_BRIDGE_INDICES,
   MOUTH_OUTLINE_INDICES,
-} from "../faceKeypoints";
+} from "../../utils/faceKeypoints";
 
 /**
  * Draws:

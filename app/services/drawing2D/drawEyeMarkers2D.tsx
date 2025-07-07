@@ -1,6 +1,6 @@
 // utils/drawFaceMarkers2D.tsx
-import { EYE_MARKER_RADIUS_2D } from "../config";
-import { FACE_KEYPOINTS } from "../faceKeypoints";
+import { EYE_MARKER_RADIUS_2D } from "../../utils/config";
+import { FACE_KEYPOINTS } from "../../utils/faceKeypoints";
 
 /**
  * Draws colored markers and labels at key facial landmarks

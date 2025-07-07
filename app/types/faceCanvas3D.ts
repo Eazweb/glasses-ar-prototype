@@ -8,6 +8,7 @@ export interface FaceCanvas3DProps {
   showEyes: boolean;
   showMask: boolean;
   showGlasses: boolean;
+  showGrid: boolean;
   videoTextureVersion: number;
   fps: number;
 }

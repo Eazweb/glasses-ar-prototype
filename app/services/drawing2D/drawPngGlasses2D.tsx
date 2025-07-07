@@ -1,5 +1,5 @@
-import { GLASSES_EYEDISTANCE_MULTIPLIER_2D } from "../config";
-import { FACE_KEYPOINTS } from "../faceKeypoints";
+import { GLASSES_EYEDISTANCE_MULTIPLIER_2D } from "../../utils/config";
+import { FACE_KEYPOINTS } from "../../utils/faceKeypoints";
 
 /**
  * Draws PNG glasses on the canvas positioned and scaled based on face landmarks
