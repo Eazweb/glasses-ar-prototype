@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { useFaceLandmarker } from "../hooks/useFaceLandmarker";
 import { useVideoReady } from "../hooks/useVideoReady";
 import { useTextureVersion } from "../hooks/useTextureVersion";
-import FaceMesh3D from "./FaceCanvas3D";
+
 import FaceCanvas2D from "./FaceCanvas2D";
 import OverlayControls from "./OverlayControls";
 import FaceCanvas3D from "./FaceCanvas3D";
@@ -32,6 +32,7 @@ export default function FaceTracker() {
     showMask: false,
     showGlasses: false,
     showGrid: false,
+    showOccluder: true,
   });
 
   // FPS control for 3D rendering
@@ -94,6 +95,7 @@ export default function FaceTracker() {
             showMask={overlays3D.showMask}
             showGlasses={overlays3D.showGlasses}
             showGrid={overlays3D.showGrid}
+            showOccluder={overlays3D.showOccluder}
             videoTextureVersion={videoTextureVersion}
             fps={fps3D}
           />
@@ -103,6 +105,7 @@ export default function FaceTracker() {
             showMask={overlays3D.showMask}
             showGlasses={overlays3D.showGlasses}
             showGrid={overlays3D.showGrid}
+            showOccluder={overlays3D.showOccluder}
             onToggleAll={() =>
               setOverlays3D((prev) => ({ ...prev, showAll: !prev.showAll }))
             }
@@ -122,6 +125,12 @@ export default function FaceTracker() {
               setOverlays3D((prev) => ({
                 ...prev,
                 showGrid: !prev.showGrid,
+              }))
+            }
+            onToggleOccluder={() =>
+              setOverlays3D((prev) => ({
+                ...prev,
+                showOccluder: !prev.showOccluder,
               }))
             }
             fps3D={fps3D}

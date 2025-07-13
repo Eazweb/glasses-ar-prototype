@@ -8,11 +8,13 @@ interface OverlayControlsProps {
   showMask: boolean;
   showGlasses: boolean;
   showGrid?: boolean;
+  showOccluder?: boolean;
   onToggleAll: () => void;
   onToggleEyes: () => void;
   onToggleMask: () => void;
   onToggleGlasses: () => void;
   onToggleGrid?: () => void;
+  onToggleOccluder?: () => void;
   fps3D?: number;
   setFps3D?: (fps: number) => void;
 }
@@ -23,11 +25,13 @@ export default function OverlayControls({
   showMask,
   showGlasses,
   showGrid,
+  showOccluder,
   onToggleAll,
   onToggleEyes,
   onToggleMask,
   onToggleGlasses,
   onToggleGrid,
+  onToggleOccluder,
   fps3D,
   setFps3D,
 }: OverlayControlsProps) {
@@ -69,6 +73,19 @@ export default function OverlayControls({
         />
         Glasses
       </label>
+
+      {/* Face Occluder Control - only show in 3D mode */}
+      {showOccluder !== undefined && onToggleOccluder && (
+        <label className="inline-flex items-center text-white">
+          <input
+            type="checkbox"
+            checked={showOccluder}
+            onChange={onToggleOccluder}
+            className="mr-2"
+          />
+          Face Occluder
+        </label>
+      )}
 
       {/* Center Grid Control - only show in 3D mode */}
       {showGrid !== undefined && onToggleGrid && (

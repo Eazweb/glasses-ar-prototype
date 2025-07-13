@@ -48,133 +48,136 @@ export function useGlassesDebug(
       })}
 
       {/* STABLE 3D COORDINATE SYSTEM VECTORS */}
-      {false && (() => {
-        const L2 = landmarks[33],
-          R2 = landmarks[263],
-          N2 = landmarks[1],
-          B2 = landmarks[8];
-        if (!L2 || !R2 || !N2 || !B2) return null;
+      {false &&
+        (() => {
+          const L2 = landmarks[33],
+            R2 = landmarks[263],
+            N2 = landmarks[1],
+            B2 = landmarks[8];
+          if (!L2 || !R2 || !N2 || !B2) return null;
 
-        const L3 = landmarkToWorld(L2),
-          R3 = landmarkToWorld(R2);
-        const N3 = landmarkToWorld(N2),
-          B3 = landmarkToWorld(B2);
+          const L3 = landmarkToWorld(L2),
+            R3 = landmarkToWorld(R2);
+          const N3 = landmarkToWorld(N2),
+            B3 = landmarkToWorld(B2);
 
-        // Calculate the stable coordinate system (matching useEffect logic)
-        const initialUp = new THREE.Vector3().subVectors(B3, N3).normalize();
-        const initialRight = new THREE.Vector3().subVectors(R3, L3).normalize();
-        const forward = new THREE.Vector3()
-          .crossVectors(initialUp, initialRight)
-          .normalize();
-        const right = new THREE.Vector3()
-          .crossVectors(forward, initialUp)
-          .normalize();
+          // Calculate the stable coordinate system (matching useEffect logic)
+          const initialUp = new THREE.Vector3().subVectors(B3, N3).normalize();
+          const initialRight = new THREE.Vector3()
+            .subVectors(R3, L3)
+            .normalize();
+          const forward = new THREE.Vector3()
+            .crossVectors(initialUp, initialRight)
+            .normalize();
+          const right = new THREE.Vector3()
+            .crossVectors(forward, initialUp)
+            .normalize();
 
-        // Use eye midpoint as origin for coordinate system
-        const eyeMid = new THREE.Vector3()
-          .addVectors(L3, R3)
-          .multiplyScalar(0.5);
-        const arrowLength = 0.3;
+          // Use eye midpoint as origin for coordinate system
+          const eyeMid = new THREE.Vector3()
+            .addVectors(L3, R3)
+            .multiplyScalar(0.5);
+          const arrowLength = 0.3;
 
-        return (
-          <>
-            {/* RIGHT vector (red) */}
-            <primitive
-              object={createArrow(
-                eyeMid,
-                new THREE.Vector3().addVectors(
+          return (
+            <>
+              {/* RIGHT vector (red) */}
+              <primitive
+                object={createArrow(
                   eyeMid,
-                  right.clone().multiplyScalar(arrowLength),
-                ),
-                "red",
-              )}
-            />
+                  new THREE.Vector3().addVectors(
+                    eyeMid,
+                    right.clone().multiplyScalar(arrowLength),
+                  ),
+                  "red",
+                )}
+              />
 
-            {/* UP vector (green) */}
-            <primitive
-              object={createArrow(
-                eyeMid,
-                new THREE.Vector3().addVectors(
+              {/* UP vector (green) */}
+              <primitive
+                object={createArrow(
                   eyeMid,
-                  initialUp.clone().multiplyScalar(arrowLength),
-                ),
-                "green",
-              )}
-            />
+                  new THREE.Vector3().addVectors(
+                    eyeMid,
+                    initialUp.clone().multiplyScalar(arrowLength),
+                  ),
+                  "green",
+                )}
+              />
 
-            {/* FORWARD vector (blue) */}
-            <primitive
-              object={createArrow(
-                eyeMid,
-                new THREE.Vector3().addVectors(
+              {/* FORWARD vector (blue) */}
+              <primitive
+                object={createArrow(
                   eyeMid,
-                  forward.clone().multiplyScalar(arrowLength),
-                ),
-                "blue",
-              )}
-            />
+                  new THREE.Vector3().addVectors(
+                    eyeMid,
+                    forward.clone().multiplyScalar(arrowLength),
+                  ),
+                  "blue",
+                )}
+              />
 
-            {/* Coordinate system labels */}
-            <group
-              position={new THREE.Vector3()
-                .addVectors(
-                  eyeMid,
-                  right.clone().multiplyScalar(arrowLength + 0.02),
-                )
-                .toArray()}
-            >
-              <Text
-                fontSize={0.05}
-                color="red"
-                anchorX="center"
-                anchorY="middle"
+              {/* Coordinate system labels */}
+              <group
+                position={new THREE.Vector3()
+                  .addVectors(
+                    eyeMid,
+                    right.clone().multiplyScalar(arrowLength + 0.02),
+                  )
+                  .toArray()}
               >
-                RIGHT
-              </Text>
-            </group>
-            <group
-              position={new THREE.Vector3()
-                .addVectors(
-                  eyeMid,
-                  initialUp.clone().multiplyScalar(arrowLength + 0.02),
-                )
-                .toArray()}
-            >
-              <Text
-                fontSize={0.05}
-                color="green"
-                anchorX="center"
-                anchorY="middle"
+                <Text
+                  fontSize={0.05}
+                  color="red"
+                  anchorX="center"
+                  anchorY="middle"
+                >
+                  RIGHT
+                </Text>
+              </group>
+              <group
+                position={new THREE.Vector3()
+                  .addVectors(
+                    eyeMid,
+                    initialUp.clone().multiplyScalar(arrowLength + 0.02),
+                  )
+                  .toArray()}
               >
-                UP
-              </Text>
-            </group>
-            <group
-              position={new THREE.Vector3()
-                .addVectors(
-                  eyeMid,
-                  forward.clone().multiplyScalar(arrowLength + 0.02),
-                )
-                .toArray()}
-            >
-              <Text
-                fontSize={0.05}
-                color="blue"
-                anchorX="center"
-                anchorY="middle"
+                <Text
+                  fontSize={0.05}
+                  color="green"
+                  anchorX="center"
+                  anchorY="middle"
+                >
+                  UP
+                </Text>
+              </group>
+              <group
+                position={new THREE.Vector3()
+                  .addVectors(
+                    eyeMid,
+                    forward.clone().multiplyScalar(arrowLength + 0.02),
+                  )
+                  .toArray()}
               >
-                FORWARD
-              </Text>
-            </group>
+                <Text
+                  fontSize={0.05}
+                  color="blue"
+                  anchorX="center"
+                  anchorY="middle"
+                >
+                  FORWARD
+                </Text>
+              </group>
 
-            {/* Origin point */}
-            <mesh position={eyeMid.toArray()}>
-              <sphereGeometry args={[0.005, 8, 8]} />
-              <meshBasicMaterial color="white" />
-            </mesh>
-          </>
-        );
-      })()}
+              {/* Origin point */}
+              <mesh position={eyeMid.toArray()}>
+                <sphereGeometry args={[0.005, 8, 8]} />
+                <meshBasicMaterial color="white" />
+              </mesh>
+            </>
+          );
+        })()}
 
       {/* SIMPLE LANDMARK ARROWS FOR DEBUGGING */}
       {(() => {

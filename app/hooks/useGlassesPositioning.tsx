@@ -5,7 +5,10 @@ import { GLASSES_EYEDISTANCE_MULTIPLIER_3D } from "../utils/config";
 import { landmarkToWorld } from "../utils/landmarkToWorld";
 
 // Smoothing state (persists across renders)
-const SMOOTHING_FACTOR = 0.5;
+const SMOOTHING_FACTOR_XYZ = 0.8;
+const SMOOTH_X = 0.8; // pitch
+const SMOOTH_Y = 0.8; // yaw
+const SMOOTH_Z = 0.8; // roll
 let smoothedEuler = new THREE.Euler(0, 0, 0, "YXZ");
 
 export function useGlassesPositioning(
@@ -46,7 +49,7 @@ export function useGlassesPositioning(
       .addVectors(LE2_3, RE2_3)
       .multiplyScalar(0.5);
     eyeMid.y -= 0.05;
-    eyeMid.z -= 0.08;
+    eyeMid.z += 0;
     const scale = LE2_3.distanceTo(RE2_3) * GLASSES_EYEDISTANCE_MULTIPLIER_3D;
 
     // --- BUILD A STABLE 3D COORDINATE SYSTEM ---
@@ -82,18 +85,69 @@ export function useGlassesPositioning(
       "YXZ",
     );
 
-    targetEuler.x *= 2;
-    targetEuler.y *= 2;
-    targetEuler.z *= 1;
+    targetEuler.x *= 1.2; // pitch
+    targetEuler.y *= 2; // yaw
+    targetEuler.z *= 1; // roll
+
+    const yaw = targetEuler.y;
 
     // 8. Apply smoothing
-    smoothedEuler.x += (targetEuler.x - smoothedEuler.x) * SMOOTHING_FACTOR; // yaw
-    smoothedEuler.y += (targetEuler.y - smoothedEuler.y) * SMOOTHING_FACTOR; // pitch
-    smoothedEuler.z += (targetEuler.z - smoothedEuler.z) * SMOOTHING_FACTOR; // roll
+    smoothedEuler.x += (targetEuler.x - smoothedEuler.x) * SMOOTH_X; // pitch
+    smoothedEuler.y += (targetEuler.y - smoothedEuler.y) * SMOOTH_Y; // yaw
+    smoothedEuler.z += (targetEuler.z - smoothedEuler.z) * SMOOTH_Z; // roll
+
+    const forwardShift = useYawZOffset(yaw, forward, 0.02);
+    const lateralShift = useYawXOffset(yaw, right, 0.04);
+    eyeMid.add(forwardShift).add(lateralShift);
 
     // 9. Commit transforms
     pivot.current.position.copy(eyeMid);
     pivot.current.scale.setScalar(scale);
     pivot.current.setRotationFromEuler(smoothedEuler);
   }, [landmarks]);
+}
+
+/**
+ * Calculates a forward Z-axis offset based on yaw.
+ * Prevents glasses from clipping into the cheeks by pushing them slightly forward when yawing.
+ *
+ * @param yaw - Euler yaw in radians (positive = head turned right, negative = left)
+ * @param forward - The current forward vector of the head
+ * @param intensity - Max push distance at max yaw (default: 0.1)
+ * @param maxYaw - Max yaw angle to normalize against (default: 0.6 radians)
+ * @returns a Vector3 offset to add to position
+ */
+export function useYawZOffset(
+  yaw: number,
+  forward: THREE.Vector3,
+  intensity = 0.1,
+  maxYaw = 0.6,
+): THREE.Vector3 {
+  const clampedYaw = Math.min(Math.abs(yaw), maxYaw);
+  const strength = clampedYaw / maxYaw;
+  return forward.clone().multiplyScalar(strength * intensity);
+}
+
+/**
+ * Calculates a lateral X-axis offset based on yaw direction.
+ * Makes the glasses shift sideways when turning, to simulate more realistic head geometry.
+ *
+ * @param yaw - Euler yaw in radians (positive = head turned right)
+ * @param right - The current right vector of the head
+ * @param intensity - Max lateral offset (default: 0.05)
+ * @param maxYaw - Max yaw angle to normalize against (default: 0.6 radians)
+ * @returns a Vector3 offset to add to position
+ */
+export function useYawXOffset(
+  yaw: number,
+  right: THREE.Vector3,
+  intensity = 0.05,
+  maxYaw = 0.6,
+): THREE.Vector3 {
+  const clampedYaw = Math.max(Math.min(yaw, maxYaw), -maxYaw);
+  const strength = clampedYaw / maxYaw; // negative = left, positive = right
+  // ⏩ Ease-out curve — starts slow, speeds up
+  const eased = Math.sign(strength) * Math.pow(Math.abs(strength), 1.8);
+
+  return right.clone().multiplyScalar(eased * intensity);
 }

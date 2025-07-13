@@ -11,6 +11,7 @@ import { drawFaceMask3D } from "../services/drawing3D/drawFaceMask3D";
 import { drawCenterGrid3D } from "../services/drawing3D/drawCenterGrid3D";
 import { FaceCanvas3DProps } from "../types/faceCanvas3D";
 import { DrawGlasses3D } from "../services/drawing3D/drawGlasses3D";
+import { FaceOccluder } from "../services/drawing3D/drawFaceOccluder";
 
 export default function FaceCanvas3D({
   videoRef,
@@ -21,6 +22,7 @@ export default function FaceCanvas3D({
   showMask,
   showGlasses,
   showGrid,
+  showOccluder,
   videoTextureVersion,
   fps,
 }: FaceCanvas3DProps) {
@@ -71,7 +73,38 @@ export default function FaceCanvas3D({
           toneMapping: THREE.NoToneMapping,
         }}
       >
-        {/* No lights needed for video texture - it's self-illuminating */}
+        <ambientLight intensity={0.2} color="#ffffff" />
+
+        {/* Simple point lights for the scene */}
+        {[
+          {
+            position: [1, 1, 1] as [number, number, number],
+            color: "white",
+            intensity: 2,
+          },
+          {
+            position: [-1, 1, 1] as [number, number, number],
+            color: "yellow",
+            intensity: 2,
+          },
+          {
+            position: [0, -1, 1] as [number, number, number],
+            color: "cyan",
+            intensity: 2,
+          },
+        ].map((light, index) => (
+          <React.Fragment key={index}>
+            <pointLight
+              position={light.position}
+              intensity={light.intensity}
+              color={light.color}
+            />
+            <mesh position={light.position}>
+              <sphereGeometry args={[0.1, 8, 8]} />
+              <meshBasicMaterial color={light.color} />
+            </mesh>
+          </React.Fragment>
+        ))}
 
         {/* Show video background - fill entire viewport */}
         {videoTexture && (
@@ -84,6 +117,9 @@ export default function FaceCanvas3D({
         {/* Render landmarks using points for better performance */}
         {convertedLandmarks.length > 0 && (
           <>
+            {/* ✅ Render the invisible occluder first - now conditional */}
+            {showOccluder && <FaceOccluder landmarks={convertedLandmarks} />}
+
             {/* Render all landmarks */}
             {showAll && drawAllLandmarks3D(convertedLandmarks)}
 
@@ -93,7 +129,7 @@ export default function FaceCanvas3D({
             {/* Render face mask */}
             {showMask && drawFaceMask3D(convertedLandmarks)}
 
-            {/* Render glasses */}
+            {/* Render glasses - they will now be correctly occluded */}
             {showGlasses && <DrawGlasses3D landmarks={convertedLandmarks} />}
           </>
         )}
