@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { Group } from "three";
 import { GLASSES_EYEDISTANCE_MULTIPLIER_3D } from "../utils/config";
 import { landmarkToWorld } from "../utils/landmarkToWorld";
+import { useKalmanLandmark } from "./useKalmanLandmark";
 
 // Smoothing state (persists across renders)
 const SMOOTHING_FACTOR_XYZ = 0.8;
@@ -15,20 +16,51 @@ export function useGlassesPositioning(
   landmarks: { x: number; y: number; z?: number }[],
   pivot: React.RefObject<Group | null>,
 ) {
+  // Move all hook calls to the top level
+  const smoothedLandmark224 = useKalmanLandmark(
+    landmarks[224] || { x: 0, y: 0, z: 0 },
+  );
+  const smoothedLandmark444 = useKalmanLandmark(
+    landmarks[444] || { x: 0, y: 0, z: 0 },
+  );
+  const smoothedLandmark10 = useKalmanLandmark(
+    landmarks[10] || { x: 0, y: 0, z: 0 },
+  );
+  const smoothedLandmark175 = useKalmanLandmark(
+    landmarks[175] || { x: 0, y: 0, z: 0 },
+  );
+  const smoothedLandmark127 = useKalmanLandmark(
+    landmarks[127] || { x: 0, y: 0, z: 0 },
+  );
+  const smoothedLandmark356 = useKalmanLandmark(
+    landmarks[356] || { x: 0, y: 0, z: 0 },
+  );
+  const smoothedLandmark1 = useKalmanLandmark(
+    landmarks[1] || { x: 0, y: 0, z: 0 },
+  );
+
   useEffect(() => {
     if (!landmarks.length || !pivot.current) return;
 
     // 1. Get landmarks and convert to 3D world space
     const LE3 = landmarkToWorld(landmarks[33]); // left eye
     const RE3 = landmarkToWorld(landmarks[263]); // right eye
-    const LE2_3 = landmarkToWorld(landmarks[224]); // left eyelid
-    const RE2_3 = landmarkToWorld(landmarks[444]); // right eyelid
-    const N3 = landmarkToWorld(landmarks[1]); // nose tip
     const B3 = landmarkToWorld(landmarks[8]); // nose bridge
-    const T3 = landmarkToWorld(landmarks[10]); // top most point
-    const C3 = landmarkToWorld(landmarks[175]); // chin
-    const L3 = landmarkToWorld(landmarks[127]); // left most point
-    const R3 = landmarkToWorld(landmarks[356]); // right most point
+    // const N3 = landmarkToWorld(landmarks[1]); // nose tip
+    // const LE2_3 = landmarkToWorld(landmarks[224]); // left eyelid
+    // const RE2_3 = landmarkToWorld(landmarks[444]); // right eyelid
+    // const T3 = landmarkToWorld(landmarks[10]); // top most point
+    // const C3 = landmarkToWorld(landmarks[175]); // chin
+    // const L3 = landmarkToWorld(landmarks[127]); // left most point
+    // const R3 = landmarkToWorld(landmarks[356]); // right most point
+
+    const LE2_3 = landmarkToWorld(smoothedLandmark224); // left eyelid
+    const RE2_3 = landmarkToWorld(smoothedLandmark444); // right eyelid
+    const T3 = landmarkToWorld(smoothedLandmark10); // top most point
+    const C3 = landmarkToWorld(smoothedLandmark175); // chin
+    const L3 = landmarkToWorld(smoothedLandmark127); // left most point
+    const R3 = landmarkToWorld(smoothedLandmark356); // right most point
+    const N3 = landmarkToWorld(smoothedLandmark1); // nose tip
 
     if (
       !LE3 ||
@@ -96,15 +128,24 @@ export function useGlassesPositioning(
     smoothedEuler.y += (targetEuler.y - smoothedEuler.y) * SMOOTH_Y; // yaw
     smoothedEuler.z += (targetEuler.z - smoothedEuler.z) * SMOOTH_Z; // roll
 
-    const forwardShift = useYawZOffset(yaw, forward, 0.02);
-    const lateralShift = useYawXOffset(yaw, right, 0.04);
+    const forwardShift = useYawZOffset(yaw, forward, 0.03);
+    const lateralShift = useYawXOffset(yaw, right, 0.05);
     eyeMid.add(forwardShift).add(lateralShift);
 
     // 9. Commit transforms
     pivot.current.position.copy(eyeMid);
     pivot.current.scale.setScalar(scale);
     pivot.current.setRotationFromEuler(smoothedEuler);
-  }, [landmarks]);
+  }, [
+    landmarks,
+    smoothedLandmark224,
+    smoothedLandmark444,
+    smoothedLandmark10,
+    smoothedLandmark175,
+    smoothedLandmark127,
+    smoothedLandmark356,
+    smoothedLandmark1,
+  ]);
 }
 
 /**

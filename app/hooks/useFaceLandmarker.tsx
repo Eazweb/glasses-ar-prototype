@@ -11,6 +11,9 @@ export function useFaceLandmarker(): FaceLandmarkerReturn {
   const landmarks = useRef<any[]>([]);
   useEffect(() => {
     let lm: FaceLandmarker, id: number;
+    let lastDetectionTime = 0;
+    const detectionInterval = 1000 / 30; // 30 FPS for detection
+
     (async () => {
       const fileset = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm",
@@ -24,9 +27,22 @@ export function useFaceLandmarker(): FaceLandmarkerReturn {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       video.srcObject = stream;
       await video.play();
+
       const loop = () => {
-        const res = lm.detectForVideo(video, performance.now());
-        if (res.faceLandmarks.length) landmarks.current = res.faceLandmarks[0];
+        const currentTime = performance.now();
+
+        // Only run detection at 30 FPS to reduce CPU load
+        if (currentTime - lastDetectionTime >= detectionInterval) {
+          try {
+            const res = lm.detectForVideo(video, currentTime);
+            if (res.faceLandmarks.length)
+              landmarks.current = res.faceLandmarks[0];
+            lastDetectionTime = currentTime;
+          } catch (error) {
+            console.warn("Face detection error:", error);
+          }
+        }
+
         id = requestAnimationFrame(loop);
       };
       loop();

@@ -36,7 +36,7 @@ export default function FaceTracker() {
   });
 
   // FPS control for 3D rendering
-  const [fps3D, setFps3D] = useState(30);
+  const [fps3D, setFps3D] = useState(60);
 
   // Use custom hook for video ready state
   const videoReady = useVideoReady(videoRef);
