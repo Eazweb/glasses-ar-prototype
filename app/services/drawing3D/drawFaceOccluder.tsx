@@ -1,13 +1,14 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import * as THREE from "three";
 import { landmarkToWorld } from "../../utils/landmarkToWorld";
 import { TRIANGULATION } from "../../utils/config";
 
 type Props = {
   landmarks: { x: number; y: number; z?: number }[];
+  onRendered?: () => void;
 };
 
-export function FaceOccluder({ landmarks }: Props) {
+export function FaceOccluder({ landmarks, onRendered }: Props) {
   const geometry = useMemo(() => {
     const geom = new THREE.BufferGeometry();
 
@@ -27,6 +28,12 @@ export function FaceOccluder({ landmarks }: Props) {
     geom.computeVertexNormals();
     return geom;
   }, [landmarks]);
+
+  useEffect(() => {
+    if (onRendered) onRendered();
+    // Only call once after mount or when geometry changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geometry]);
 
   return (
     <mesh geometry={geometry}>

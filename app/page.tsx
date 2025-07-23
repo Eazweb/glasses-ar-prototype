@@ -17,8 +17,8 @@ export default function Home() {
   return (
     <>
       <Header />
-      <div className="flex flex-col items-center justify-center">
-        <div className="mt-12 size-176">
+      <div className="flex min-h-screen flex-col items-center">
+        <div className="relative aspect-[1080/1080] w-full max-w-3xl">
           <FaceTracker />
         </div>
       </div>

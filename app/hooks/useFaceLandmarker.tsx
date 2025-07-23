@@ -9,10 +9,24 @@ import { FaceLandmarkerReturn } from "../types/faceLandmarker";
 export function useFaceLandmarker(): FaceLandmarkerReturn {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarks = useRef<any[]>([]);
+
+  const originalConsoleError = console.error;
+  console.error = function (...args) {
+    // Filter out TensorFlow Lite info messages
+    if (
+      args[0] &&
+      args[0].includes &&
+      args[0].includes("Created TensorFlow Lite XNNPACK delegate")
+    ) {
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+
   useEffect(() => {
     let lm: FaceLandmarker, id: number;
     let lastDetectionTime = 0;
-    const detectionInterval = 1000 / 30; // 30 FPS for detection
+    const detectionInterval = 1000 / 24; // 24 FPS for detection
 
     (async () => {
       const fileset = await FilesetResolver.forVisionTasks(
@@ -24,7 +38,12 @@ export function useFaceLandmarker(): FaceLandmarkerReturn {
         numFaces: 1,
       });
       const video = videoRef.current!;
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          aspectRatio: { ideal: 1 / 1 },
+        },
+      });
       video.srcObject = stream;
       await video.play();
 

@@ -1,50 +1,38 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Text } from "@react-three/drei";
+import { Environment, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useVideoTexture } from "../hooks/useVideoTexture";
 import { convertLandmarks3D } from "../utils/landmarkConversion";
-import { drawAllLandmarks3D } from "../services/drawing3D/drawAllLandmarks3D";
-import { drawEyeMarkers3D } from "../services/drawing3D/drawEyeMarkers3D";
-import { drawFaceMask3D } from "../services/drawing3D/drawFaceMask3D";
-import { drawCenterGrid3D } from "../services/drawing3D/drawCenterGrid3D";
 import { FaceCanvas3DProps } from "../types/faceCanvas3D";
+
 import { DrawGlasses3D } from "../services/drawing3D/drawGlasses3D";
 import { FaceOccluder } from "../services/drawing3D/drawFaceOccluder";
+import { useVideoAspect } from "../hooks/useVideoAspect";
+import { useLandmarkUpdater } from "../hooks/useLandmarkUpdater";
+import { useDynamicPlane } from "../hooks/useDynamicPlane";
+import { useDelayedVideoTexture } from "../hooks/useDelayedVideoTexture";
 
-export default function FaceCanvas3D({
-  videoRef,
-  videoReady,
-  landmarks,
-  showAll,
-  showEyes,
-  showMask,
-  showGlasses,
-  showGrid,
-  showOccluder,
-  videoTextureVersion,
-  fps,
-}: FaceCanvas3DProps) {
-  // Use fixed interval for controlled FPS updates
-  const [landmarkVersion, setLandmarkVersion] = React.useState(0);
+export default function FaceCanvas3D(props: FaceCanvas3DProps) {
+  const {
+    videoRef,
+    videoReady,
+    landmarks,
+    showAll,
+    showEyes,
+    showMask,
+    showGlasses,
+    showGrid,
+    showOccluder,
+    videoTextureVersion,
+    fps,
+    onOccluderRendered,
+    onGlassesRendered,
+  } = props;
 
-  React.useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    const interval = 1000 / fps; // Convert FPS to milliseconds
-
-    const updateLandmarks = () => {
-      if (landmarks.current && landmarks.current.length > 0) {
-        setLandmarkVersion((v) => v + 1);
-      }
-    };
-
-    intervalId = setInterval(updateLandmarks, interval);
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [landmarks, fps]);
+  // Use custom hook for controlled FPS updates of landmarks
+  const landmarkVersion = useLandmarkUpdater(landmarks, fps);
 
   const convertedLandmarks = useMemo(
     () => {
@@ -54,99 +42,100 @@ export default function FaceCanvas3D({
     [landmarkVersion], // Force update when version changes
   );
 
-  // const convertedLandmarks = landmarks.current;
+  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 2);
 
-  const videoTexture = useVideoTexture(
-    videoRef,
-    videoReady,
-    videoTextureVersion,
-  );
+  const videoAspect = useVideoAspect(videoRef, videoReady);
+  const { planeWidth, planeHeight, FOV, cameraZ } =
+    useDynamicPlane(videoAspect);
 
   return (
     <>
       {/* <video ref={videoRef} className="hidden" playsInline muted autoPlay /> */}
       <Canvas
         className="absolute top-0 left-0 w-full"
-        camera={{ position: [0, 0, 2], fov: 70 }}
+        camera={{ position: [0, 0, cameraZ], fov: FOV }}
         gl={{
           outputColorSpace: THREE.SRGBColorSpace,
           toneMapping: THREE.NoToneMapping,
         }}
       >
-        <ambientLight intensity={0.2} color="#ffffff" />
+        <group scale={[-1, 1, 1]}>
+          {/* Debug */}
+          {/* <axesHelper args={[1]} /> */}
+          {/* <gridHelper args={[10, 10]} /> */}
 
-        {/* Simple point lights for the scene */}
-        {[
-          {
-            position: [1, 1, 1] as [number, number, number],
-            color: "white",
-            intensity: 2,
-          },
-          {
-            position: [-1, 1, 1] as [number, number, number],
-            color: "yellow",
-            intensity: 2,
-          },
-          {
-            position: [0, -1, 1] as [number, number, number],
-            color: "cyan",
-            intensity: 2,
-          },
-        ].map((light, index) => (
-          <React.Fragment key={index}>
-            <pointLight
-              position={light.position}
-              intensity={light.intensity}
-              color={light.color}
-            />
-            <mesh position={light.position}>
-              <sphereGeometry args={[0.1, 8, 8]} />
-              <meshBasicMaterial color={light.color} />
+          <Environment preset="apartment" background={false} />
+
+          {/* Simple point lights for the scene */}
+          {/* {[
+            {
+              position: [0, 1, 0.8] as [number, number, number],
+              color: "#FFFFF7",
+              intensity: 0.4,
+            },
+            {
+              position: [1, 0, 0.5] as [number, number, number],
+              color: "white",
+              intensity: 0.1,
+            },
+            {
+              position: [-1, 0, 0.5] as [number, number, number],
+              color: "white",
+              intensity: 0.1,
+            },
+          ].map((light, index) => (
+            <React.Fragment key={index}>
+              <pointLight
+                position={light.position}
+                intensity={light.intensity}
+                color={light.color}
+              />
+              <mesh position={light.position}>
+                <sphereGeometry args={[0.05, 8, 8]} />
+                <meshBasicMaterial color={light.color} />
+              </mesh>
+            </React.Fragment>
+          ))} */}
+
+          {/* Show video background - fill entire viewport */}
+          {videoTexture && (
+            <mesh scale={[planeWidth, planeHeight, 1]} position={[0, 0, -0.08]}>
+              <planeGeometry />
+              <meshBasicMaterial map={videoTexture} />
             </mesh>
-          </React.Fragment>
-        ))}
+          )}
 
-        {/* Show video background - fill entire viewport */}
-        {videoTexture && (
-          <mesh scale={[3.6, 2.7, 1]} position={[0, 0, -1]}>
-            <planeGeometry />
-            <meshBasicMaterial map={videoTexture} />
-          </mesh>
-        )}
+          {convertedLandmarks.length > 0 && (
+            <>
+              {showOccluder && (
+                <FaceOccluder
+                  landmarks={convertedLandmarks}
+                  onRendered={onOccluderRendered}
+                />
+              )}
 
-        {/* Render landmarks using points for better performance */}
-        {convertedLandmarks.length > 0 && (
-          <>
-            {/* ✅ Render the invisible occluder first - now conditional */}
-            {showOccluder && <FaceOccluder landmarks={convertedLandmarks} />}
+              {showGlasses && (
+                <DrawGlasses3D
+                  landmarks={convertedLandmarks}
+                  onRendered={onGlassesRendered}
+                />
+              )}
 
-            {/* Render all landmarks */}
-            {showAll && drawAllLandmarks3D(convertedLandmarks)}
+              {/* {drawAllLandmarks3D(convertedLandmarks)} */}
+            </>
+          )}
 
-            {/* Render eye markers */}
-            {showEyes && drawEyeMarkers3D(convertedLandmarks)}
+          {/* Debug: Show a single landmark at center */}
+          {/* {convertedLandmarks.length > 0 && (
+            <mesh position={[0, 0, 0.1]}>
+              <sphereGeometry args={[0.05, 8, 8]} />
+              <meshBasicMaterial color="red" />
+            </mesh>
+          )} */}
 
-            {/* Render face mask */}
-            {showMask && drawFaceMask3D(convertedLandmarks)}
-
-            {/* Render glasses - they will now be correctly occluded */}
-            {showGlasses && <DrawGlasses3D landmarks={convertedLandmarks} />}
-          </>
-        )}
-
-        {/* Debug: Show a single landmark at center */}
-        {/* {convertedLandmarks.length > 0 && (
-          <mesh position={[0, 0, 0.1]}>
-            <sphereGeometry args={[0.05, 8, 8]} />
-            <meshBasicMaterial color="red" />
-          </mesh>
-        )} */}
-
-        {/* Center reference grid */}
-        {drawCenterGrid3D(showGrid)}
-
-        {/* Debug */}
-        <OrbitControls />
+          {/* Debug */}
+          {/* <OrbitControls /> */}
+        </group>
       </Canvas>
     </>
   );
