@@ -2,8 +2,11 @@
 import { Vector3 } from "three";
 import { smartZBoost } from "./zBooster";
 
-export const PLANE_SCALE = { x: 3, y: 2.25, z: 1.5 };
-export const PLANE_Z = -0.5;
+// PLANE_SCALE determines how normalized landmark coordinates (0-1) are mapped to 3D world units.
+// Set to 1 for both x and y to match a 1x1 video plane. Adjust z for depth exaggeration if needed.
+export const PLANE_SCALE = { x: 0.9, y: 0.9, z: 0.6 };
+// PLANE_Z is the default Z position for overlays (should match the overlays' z in the scene)
+export const PLANE_Z = 0;
 
 export function landmarkToWorld(pt: {
   x: number;

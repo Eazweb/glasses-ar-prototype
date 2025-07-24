@@ -7,30 +7,25 @@ import { useGlassesDebug } from "../../hooks/useGlassesDebug";
 
 export function DrawGlasses3D({
   landmarks,
+  onRendered,
 }: {
   landmarks: { x: number; y: number; z?: number }[];
+  onRendered?: () => void;
 }) {
   const pivot = useRef<Group>(null);
-  // const { scene } = useGLTF("/model/3d-2-rotated-fixed-newmat.glb"); // already pre-rotated in Blender
 
-  const { scene } = useGLTF("/model/models/cazal.glb"); // the other model
-
-  // Apply materials to the glasses model ( optional )
-  // useEffect(() => {
-  //   scene.traverse((child) => {
-  //     if (child instanceof Mesh) {
-  //       // Apply a new material to all meshes in the model
-  //       child.material = new MeshStandardMaterial({
-  //         color: "#444444", // Dark gray
-  //         metalness: 0.9, // Very metallic
-  //         roughness: 0.2, // Smooth surface
-  //       });
-  //     }
-  //   });
-  // }, [scene]);
+  const { scene } = useGLTF("/model/models/cazal.glb");
 
   // Use the positioning hook
   useGlassesPositioning(landmarks, pivot);
+
+  useEffect(() => {
+    if (onRendered && landmarks && landmarks.length > 0) {
+      onRendered();
+    }
+    // Only call when landmarks change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [landmarks]);
 
   return (
     <>
@@ -40,7 +35,7 @@ export function DrawGlasses3D({
       </group>
 
       {/* Debug visualizations */}
-      {useGlassesDebug(landmarks, false)}
+      {/* {useGlassesDebug(landmarks, false)} */}
     </>
   );
 }

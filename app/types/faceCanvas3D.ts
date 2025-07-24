@@ -1,9 +1,7 @@
-import { MutableRefObject } from "react";
-
 export interface FaceCanvas3DProps {
+  videoRef: React.RefObject<HTMLVideoElement>;
   videoReady: boolean;
-  videoRef: MutableRefObject<HTMLVideoElement | null>;
-  landmarks: MutableRefObject<number[][] | null>;
+  landmarks: React.MutableRefObject<number[][] | null>;
   showAll: boolean;
   showEyes: boolean;
   showMask: boolean;
@@ -12,4 +10,6 @@ export interface FaceCanvas3DProps {
   showOccluder: boolean;
   videoTextureVersion: number;
   fps: number;
+  onOccluderRendered?: () => void;
+  onGlassesRendered?: () => void;
 }

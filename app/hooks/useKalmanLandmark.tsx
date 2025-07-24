@@ -12,9 +12,9 @@ import * as THREE from "three";
  */
 export function useKalmanLandmark(point: { x: number; y: number; z?: number }) {
   const filters = useRef({
-    x: new KalmanFilter({ R: 0.01, Q: 0.005 }),
-    y: new KalmanFilter({ R: 0.01, Q: 0.005 }),
-    z: new KalmanFilter({ R: 0.01, Q: 0.005 }),
+    x: new KalmanFilter({ R: 0.01, Q: 0.0005 }),
+    y: new KalmanFilter({ R: 0.01, Q: 0.0005 }),
+    z: new KalmanFilter({ R: 0.01, Q: 0.0005 }),
   });
 
   const smoothed = useMemo(() => {

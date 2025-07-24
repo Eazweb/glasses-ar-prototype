@@ -17,70 +17,40 @@ export function useGlassesPositioning(
   pivot: React.RefObject<Group | null>,
 ) {
   // Move all hook calls to the top level
-  const smoothedLandmark224 = useKalmanLandmark(
-    landmarks[224] || { x: 0, y: 0, z: 0 },
-  );
-  const smoothedLandmark444 = useKalmanLandmark(
-    landmarks[444] || { x: 0, y: 0, z: 0 },
-  );
-  const smoothedLandmark10 = useKalmanLandmark(
-    landmarks[10] || { x: 0, y: 0, z: 0 },
-  );
-  const smoothedLandmark175 = useKalmanLandmark(
-    landmarks[175] || { x: 0, y: 0, z: 0 },
-  );
-  const smoothedLandmark127 = useKalmanLandmark(
-    landmarks[127] || { x: 0, y: 0, z: 0 },
-  );
-  const smoothedLandmark356 = useKalmanLandmark(
-    landmarks[356] || { x: 0, y: 0, z: 0 },
-  );
-  const smoothedLandmark1 = useKalmanLandmark(
-    landmarks[1] || { x: 0, y: 0, z: 0 },
-  );
+  // const smoothedLandmark224 = useKalmanLandmark(
+  //   landmarks[224] || { x: 0, y: 0, z: 0 },
+  // );
+  // const smoothedLandmark444 = useKalmanLandmark(
+  //   landmarks[444] || { x: 0, y: 0, z: 0 },
+  // );
+  // const smoothedLandmark10 = useKalmanLandmark(
+  //   landmarks[10] || { x: 0, y: 0, z: 0 },
+  // );
+  // const smoothedLandmark175 = useKalmanLandmark(
+  //   landmarks[175] || { x: 0, y: 0, z: 0 },
+  // );
 
   useEffect(() => {
     if (!landmarks.length || !pivot.current) return;
 
     // 1. Get landmarks and convert to 3D world space
-    const LE3 = landmarkToWorld(landmarks[33]); // left eye
-    const RE3 = landmarkToWorld(landmarks[263]); // right eye
-    const B3 = landmarkToWorld(landmarks[8]); // nose bridge
-    // const N3 = landmarkToWorld(landmarks[1]); // nose tip
-    // const LE2_3 = landmarkToWorld(landmarks[224]); // left eyelid
-    // const RE2_3 = landmarkToWorld(landmarks[444]); // right eyelid
-    // const T3 = landmarkToWorld(landmarks[10]); // top most point
-    // const C3 = landmarkToWorld(landmarks[175]); // chin
-    // const L3 = landmarkToWorld(landmarks[127]); // left most point
-    // const R3 = landmarkToWorld(landmarks[356]); // right most point
+    // const LE2_3 = landmarkToWorld(smoothedLandmark224); // left eyelid
+    // const RE2_3 = landmarkToWorld(smoothedLandmark444); // right eyelid
+    // const T3 = landmarkToWorld(smoothedLandmark10); // top most point
+    // const C3 = landmarkToWorld(smoothedLandmark175); // chin
 
-    const LE2_3 = landmarkToWorld(smoothedLandmark224); // left eyelid
-    const RE2_3 = landmarkToWorld(smoothedLandmark444); // right eyelid
-    const T3 = landmarkToWorld(smoothedLandmark10); // top most point
-    const C3 = landmarkToWorld(smoothedLandmark175); // chin
-    const L3 = landmarkToWorld(smoothedLandmark127); // left most point
-    const R3 = landmarkToWorld(smoothedLandmark356); // right most point
-    const N3 = landmarkToWorld(smoothedLandmark1); // nose tip
+    const LE2_3 = landmarkToWorld(landmarks[224]); // left eyelid
+    const RE2_3 = landmarkToWorld(landmarks[444]); // right eyelid
+    const T3 = landmarkToWorld(landmarks[10]); // top most point
+    const C3 = landmarkToWorld(landmarks[175]); // chin
 
-    if (
-      !LE3 ||
-      !RE3 ||
-      !N3 ||
-      !B3 ||
-      !T3 ||
-      !C3 ||
-      !L3 ||
-      !R3 ||
-      !LE2_3 ||
-      !RE2_3
-    )
-      return;
+    if (!T3 || !C3 || !LE2_3 || !RE2_3) return;
 
     // 2. Calculate position and scale
     const eyeMid = new THREE.Vector3()
       .addVectors(LE2_3, RE2_3)
       .multiplyScalar(0.5);
-    eyeMid.y -= 0.05;
+    eyeMid.y -= 0.035;
     eyeMid.z += 0;
     const scale = LE2_3.distanceTo(RE2_3) * GLASSES_EYEDISTANCE_MULTIPLIER_3D;
 
@@ -117,8 +87,8 @@ export function useGlassesPositioning(
       "YXZ",
     );
 
-    targetEuler.x *= 1.2; // pitch
-    targetEuler.y *= 2; // yaw
+    targetEuler.x *= 1.35; // pitch
+    targetEuler.y *= 1.75; // yaw
     targetEuler.z *= 1; // roll
 
     const yaw = targetEuler.y;
@@ -128,8 +98,8 @@ export function useGlassesPositioning(
     smoothedEuler.y += (targetEuler.y - smoothedEuler.y) * SMOOTH_Y; // yaw
     smoothedEuler.z += (targetEuler.z - smoothedEuler.z) * SMOOTH_Z; // roll
 
-    const forwardShift = useYawZOffset(yaw, forward, 0.03);
-    const lateralShift = useYawXOffset(yaw, right, 0.05);
+    const forwardShift = useYawZOffset(yaw, forward, 0.028);
+    const lateralShift = useYawXOffset(yaw, right, 0.02);
     eyeMid.add(forwardShift).add(lateralShift);
 
     // 9. Commit transforms
@@ -138,13 +108,10 @@ export function useGlassesPositioning(
     pivot.current.setRotationFromEuler(smoothedEuler);
   }, [
     landmarks,
-    smoothedLandmark224,
-    smoothedLandmark444,
-    smoothedLandmark10,
-    smoothedLandmark175,
-    smoothedLandmark127,
-    smoothedLandmark356,
-    smoothedLandmark1,
+    // smoothedLandmark224,
+    // smoothedLandmark444,
+    // smoothedLandmark10,
+    // smoothedLandmark175,
   ]);
 }
 
