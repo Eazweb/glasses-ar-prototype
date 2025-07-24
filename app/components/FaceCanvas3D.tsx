@@ -5,8 +5,11 @@ import { Environment, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useVideoTexture } from "../hooks/useVideoTexture";
 import { convertLandmarks3D } from "../utils/landmarkConversion";
+import { drawAllLandmarks3D } from "../services/drawing3D/drawAllLandmarks3D";
+import { drawEyeMarkers3D } from "../services/drawing3D/drawEyeMarkers3D";
+import { drawFaceMask3D } from "../services/drawing3D/drawFaceMask3D";
+import { drawCenterGrid3D } from "../services/drawing3D/drawCenterGrid3D";
 import { FaceCanvas3DProps } from "../types/faceCanvas3D";
-
 import { DrawGlasses3D } from "../services/drawing3D/drawGlasses3D";
 import { FaceOccluder } from "../services/drawing3D/drawFaceOccluder";
 import { useVideoAspect } from "../hooks/useVideoAspect";
@@ -63,9 +66,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
           {/* Debug */}
           {/* <axesHelper args={[1]} /> */}
           {/* <gridHelper args={[10, 10]} /> */}
-
           <Environment preset="apartment" background={false} />
-
           {/* Simple point lights for the scene */}
           {/* {[
             {
@@ -96,7 +97,6 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
               </mesh>
             </React.Fragment>
           ))} */}
-
           {/* Show video background - fill entire viewport */}
           {videoTexture && (
             <mesh scale={[planeWidth, planeHeight, 1]} position={[0, 0, -0.08]}>
@@ -104,7 +104,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
               <meshBasicMaterial map={videoTexture} />
             </mesh>
           )}
-
+          {/* Render landmarks using points for better performance */}
           {convertedLandmarks.length > 0 && (
             <>
               {showOccluder && (
@@ -114,17 +114,29 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
                 />
               )}
 
+              {/* Render all landmarks */}
+              {showAll && drawAllLandmarks3D(convertedLandmarks)}
+
+              {/* Render eye markers */}
+              {showEyes && drawEyeMarkers3D(convertedLandmarks)}
+
+              {/* Render face mask */}
+              {showMask && drawFaceMask3D(convertedLandmarks)}
+
+              {/* Render glasses*/}
               {showGlasses && (
                 <DrawGlasses3D
                   landmarks={convertedLandmarks}
                   onRendered={onGlassesRendered}
                 />
               )}
-
-              {/* {drawAllLandmarks3D(convertedLandmarks)} */}
             </>
           )}
 
+          {/* Debug */}
+          <OrbitControls />
+          {/* Center reference grid */}
+          {drawCenterGrid3D(showGrid)}
           {/* Debug: Show a single landmark at center */}
           {/* {convertedLandmarks.length > 0 && (
             <mesh position={[0, 0, 0.1]}>
@@ -132,9 +144,6 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
               <meshBasicMaterial color="red" />
             </mesh>
           )} */}
-
-          {/* Debug */}
-          {/* <OrbitControls /> */}
         </group>
       </Canvas>
     </>
