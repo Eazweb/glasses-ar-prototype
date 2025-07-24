@@ -4,6 +4,8 @@ export const EYE_MARKER_RADIUS_2D = 3;
 
 export const GLASSES_EYEDISTANCE_MULTIPLIER_3D = 0.0033;
 
+export const IS_DEV = process.env.NEXT_PUBLIC_ENV === "dev";
+
 export const TRIANGULATION = [
   [127, 34, 139],
   [11, 0, 37],

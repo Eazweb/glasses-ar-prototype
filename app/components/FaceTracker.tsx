@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState, RefObject } from "react";
 import { useFaceLandmarker } from "../hooks/useFaceLandmarker";
 import { useVideoReady } from "../hooks/useVideoReady";
 import { useTextureVersion } from "../hooks/useTextureVersion";
-
+import { IS_DEV } from "../utils/config";
 import { useOccluderReady } from "../hooks/useOccluderReady";
 import { useGlassesReady } from "../hooks/useGlassesReady";
 
@@ -15,8 +15,6 @@ import FaceCanvas3D from "./FaceCanvas3D";
 type Mode = "2D" | "3D";
 
 export default function FaceTracker() {
-  const IS_DEV = process.env.NEXT_PUBLIC_ENV === "development";
-
   // grab videoRef + landmarksRef from your hook
   const { videoRef, landmarks } = useFaceLandmarker();
 

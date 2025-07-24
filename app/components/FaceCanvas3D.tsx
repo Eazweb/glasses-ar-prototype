@@ -16,6 +16,7 @@ import { useVideoAspect } from "../hooks/useVideoAspect";
 import { useLandmarkUpdater } from "../hooks/useLandmarkUpdater";
 import { useDynamicPlane } from "../hooks/useDynamicPlane";
 import { useDelayedVideoTexture } from "../hooks/useDelayedVideoTexture";
+import { IS_DEV } from "../utils/config";
 
 export default function FaceCanvas3D(props: FaceCanvas3DProps) {
   const {
@@ -134,7 +135,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
           )}
 
           {/* Debug */}
-          <OrbitControls />
+          {IS_DEV && <OrbitControls />}
           {/* Center reference grid */}
           {drawCenterGrid3D(showGrid)}
           {/* Debug: Show a single landmark at center */}
