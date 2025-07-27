@@ -8,9 +8,6 @@ import { FPS, IS_DEV } from "../utils/config";
 import { useOccluderReady } from "../hooks/useOccluderReady";
 import { useGlassesReady } from "../hooks/useGlassesReady";
 
-import { useOccluderReady } from "../hooks/useOccluderReady";
-import { useGlassesReady } from "../hooks/useGlassesReady";
-
 import FaceCanvas2D from "./FaceCanvas2D";
 import OverlayControls from "./OverlayControls";
 import FaceCanvas3D from "./FaceCanvas3D";
