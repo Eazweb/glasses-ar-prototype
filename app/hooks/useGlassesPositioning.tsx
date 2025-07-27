@@ -15,6 +15,7 @@ let smoothedEuler = new THREE.Euler(0, 0, 0, "YXZ");
 export function useGlassesPositioning(
   landmarks: { x: number; y: number; z?: number }[],
   pivot: React.RefObject<Group | null>,
+  enabled: boolean = true,
 ) {
   // Move all hook calls to the top level
   // const smoothedLandmark224 = useKalmanLandmark(
@@ -31,7 +32,7 @@ export function useGlassesPositioning(
   // );
 
   useEffect(() => {
-    if (!landmarks.length || !pivot.current) return;
+    if (!enabled || !landmarks.length || !pivot.current) return;
 
     // 1. Get landmarks and convert to 3D world space
     // const LE2_3 = landmarkToWorld(smoothedLandmark224); // left eyelid

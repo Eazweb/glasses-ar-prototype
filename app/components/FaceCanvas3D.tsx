@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, OrbitControls } from "@react-three/drei";
+import { Environment, OrbitControls, Stats } from "@react-three/drei";
 import * as THREE from "three";
 import { useVideoTexture } from "../hooks/useVideoTexture";
 import { convertLandmarks3D } from "../utils/landmarkConversion";
@@ -16,12 +16,60 @@ import { useVideoAspect } from "../hooks/useVideoAspect";
 import { useLandmarkUpdater } from "../hooks/useLandmarkUpdater";
 import { useDynamicPlane } from "../hooks/useDynamicPlane";
 import { useDelayedVideoTexture } from "../hooks/useDelayedVideoTexture";
+import { IS_DEV } from "../utils/config";
+
+// Custom FPS counter for glasses updates
+function GlassesFPSDisplay({
+  landmarks,
+}: {
+  landmarks: { x: number; y: number; z?: number }[];
+}) {
+  const [fps, setFps] = React.useState(0);
+  const frameCountRef = React.useRef(0);
+  const lastTimeRef = React.useRef(performance.now());
+
+  React.useEffect(() => {
+    if (landmarks.length > 0) {
+      frameCountRef.current++;
+      const now = performance.now();
+      const elapsed = now - lastTimeRef.current;
+
+      if (elapsed >= 1000) {
+        // Update FPS every second
+        setFps(Math.round((frameCountRef.current * 1000) / elapsed));
+        frameCountRef.current = 0;
+        lastTimeRef.current = now;
+      }
+    }
+  }, [landmarks]);
+
+  // if (!IS_DEV) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "5%",
+        right: "5%",
+        background: "rgba(0,0,0,0.7)",
+        color: "white",
+        padding: "8px 12px",
+        fontFamily: "monospace",
+        fontSize: "14px",
+        zIndex: 1000,
+      }}
+    >
+      Glasses FPS: {fps}
+    </div>
+  );
+}
 
 export default function FaceCanvas3D(props: FaceCanvas3DProps) {
   const {
     videoRef,
     videoReady,
     landmarks,
+    glassesTransform,
     showAll,
     showEyes,
     showMask,
@@ -45,7 +93,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
     [landmarkVersion], // Force update when version changes
   );
 
-  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 2);
+  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 10);
 
   const videoAspect = useVideoAspect(videoRef, videoReady);
   const { planeWidth, planeHeight, FOV, cameraZ } =
@@ -54,6 +102,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
   return (
     <>
       {/* <video ref={videoRef} className="hidden" playsInline muted autoPlay /> */}
+      <GlassesFPSDisplay landmarks={convertedLandmarks} />
       <Canvas
         className="absolute top-0 left-0 w-full"
         camera={{ position: [0, 0, cameraZ], fov: FOV }}
@@ -62,11 +111,17 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
           toneMapping: THREE.NoToneMapping,
         }}
       >
+        {IS_DEV && <Stats />}
         <group scale={[-1, 1, 1]}>
           {/* Debug */}
           {/* <axesHelper args={[1]} /> */}
           {/* <gridHelper args={[10, 10]} /> */}
+
           <Environment preset="apartment" background={false} />
+          {/* Cheap lighting instead of the expensive Environment component for mobile */}
+          {/* <ambientLight intensity={0.8} /> */}
+          {/* <directionalLight position={[2, 3, 5]} intensity={1} /> */}
+
           {/* Simple point lights for the scene */}
           {/* {[
             {
@@ -127,6 +182,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
               {showGlasses && (
                 <DrawGlasses3D
                   landmarks={convertedLandmarks}
+                  glassesTransform={glassesTransform?.current}
                   onRendered={onGlassesRendered}
                 />
               )}
@@ -134,7 +190,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
           )}
 
           {/* Debug */}
-          <OrbitControls />
+          {IS_DEV && <OrbitControls />}
           {/* Center reference grid */}
           {drawCenterGrid3D(showGrid)}
           {/* Debug: Show a single landmark at center */}

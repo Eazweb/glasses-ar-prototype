@@ -2,6 +2,7 @@
 import { useRef, useEffect } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { FaceLandmarkerReturn } from "../types/faceLandmarker";
+import { FPS } from "../utils/config";
 
 /**
  * Hook for face landmark detection using MediaPipe
@@ -9,6 +10,7 @@ import { FaceLandmarkerReturn } from "../types/faceLandmarker";
 export function useFaceLandmarker(): FaceLandmarkerReturn {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarks = useRef<any[]>([]);
+  const glassesTransform = useRef(null); // Add empty ref for API compatibility
 
   const originalConsoleError = console.error;
   console.error = function (...args) {
@@ -26,7 +28,7 @@ export function useFaceLandmarker(): FaceLandmarkerReturn {
   useEffect(() => {
     let lm: FaceLandmarker, id: number;
     let lastDetectionTime = 0;
-    const detectionInterval = 1000 / 24; // 24 FPS for detection
+    const detectionInterval = 1000 / FPS;
 
     (async () => {
       const fileset = await FilesetResolver.forVisionTasks(
@@ -71,5 +73,5 @@ export function useFaceLandmarker(): FaceLandmarkerReturn {
       if (lm) lm.close();
     };
   }, []);
-  return { videoRef, landmarks };
+  return { videoRef, landmarks, glassesTransform };
 }

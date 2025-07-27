@@ -1,9 +1,12 @@
 // components/FaceTracker.tsx
 "use client";
 import React, { useRef, useEffect, useState, RefObject } from "react";
-import { useFaceLandmarker } from "../hooks/useFaceLandmarker";
+import { useFaceWorker } from "../hooks/useFaceWorker";
 import { useVideoReady } from "../hooks/useVideoReady";
 import { useTextureVersion } from "../hooks/useTextureVersion";
+import { FPS, IS_DEV } from "../utils/config";
+import { useOccluderReady } from "../hooks/useOccluderReady";
+import { useGlassesReady } from "../hooks/useGlassesReady";
 
 import { useOccluderReady } from "../hooks/useOccluderReady";
 import { useGlassesReady } from "../hooks/useGlassesReady";
@@ -11,14 +14,16 @@ import { useGlassesReady } from "../hooks/useGlassesReady";
 import FaceCanvas2D from "./FaceCanvas2D";
 import OverlayControls from "./OverlayControls";
 import FaceCanvas3D from "./FaceCanvas3D";
+import { useFaceLandmarker } from "../hooks/useFaceLandmarker";
 
 type Mode = "2D" | "3D";
 
 export default function FaceTracker() {
-  const IS_DEV = process.env.NEXT_PUBLIC_ENV === "development";
+  // uses worker to grab videoRef + landmarksRef
+  const { videoRef, landmarks, glassesTransform } = useFaceWorker();
 
-  // grab videoRef + landmarksRef from your hook
-  const { videoRef, landmarks } = useFaceLandmarker();
+  // uses landmarker to grab videoRef + landmarksRef
+  // const { videoRef, landmarks, glassesTransform } = useFaceLandmarker();
 
   // local mode toggle
   const [mode, setMode] = useState<Mode>(IS_DEV ? "3D" : "3D");
@@ -119,8 +124,9 @@ export default function FaceTracker() {
             videoRef={videoRef as RefObject<HTMLVideoElement>}
             videoReady={videoReady}
             landmarks={landmarks}
+            glassesTransform={glassesTransform}
             videoTextureVersion={videoTextureVersion}
-            fps={IS_DEV ? fps3D : 24}
+            fps={IS_DEV ? fps3D : FPS}
             showOccluder={IS_DEV ? overlays3D.showOccluder : true}
             showGlasses={IS_DEV ? overlays3D.showGlasses : occluderReady}
             showAll={IS_DEV ? overlays3D.showAll : false}

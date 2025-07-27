@@ -1,15 +1,15 @@
-export interface FaceCanvas3DProps {
-  videoRef: React.RefObject<HTMLVideoElement>;
+import { FaceLandmarkerReturn } from "./faceLandmarker";
+
+export interface FaceCanvas3DProps extends FaceLandmarkerReturn {
   videoReady: boolean;
-  landmarks: React.MutableRefObject<number[][] | null>;
+  videoTextureVersion: number;
+  fps: number;
   showAll: boolean;
   showEyes: boolean;
   showMask: boolean;
   showGlasses: boolean;
   showGrid: boolean;
   showOccluder: boolean;
-  videoTextureVersion: number;
-  fps: number;
-  onOccluderRendered?: () => void;
-  onGlassesRendered?: () => void;
+  onOccluderRendered: () => void;
+  onGlassesRendered: () => void;
 }
