@@ -6,7 +6,7 @@ export const GLASSES_EYEDISTANCE_MULTIPLIER_3D = 0.0033;
 
 export const IS_DEV = process.env.NEXT_PUBLIC_ENV === "dev";
 
-export const FPS = 45;
+export const FPS = parseInt(process.env.NEXT_PUBLIC_FPS || "45", 10);
 
 export const TRIANGULATION = [
   [127, 34, 139],

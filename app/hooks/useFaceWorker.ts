@@ -60,7 +60,13 @@ export function useFaceWorker(): FaceLandmarkerReturn {
           isWorkerReady.current = true;
         } else if (type === "LANDMARKS_RESULT") {
           // Update the refs
+          if (
+            workerLandmarks &&
+            workerLandmarks[0] &&
+            workerLandmarks[0].length > 0
+          ) {
           landmarks.current = workerLandmarks[0] || [];
+          }
           glassesTransform.current = workerTransform;
           workerBusy = false;
           // If a new bitmap is waiting, send it now

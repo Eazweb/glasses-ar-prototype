@@ -93,7 +93,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
     [landmarkVersion], // Force update when version changes
   );
 
-  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 10);
+  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 5);
 
   const videoAspect = useVideoAspect(videoRef, videoReady);
   const { planeWidth, planeHeight, FOV, cameraZ } =

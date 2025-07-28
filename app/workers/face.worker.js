@@ -4,6 +4,12 @@ import {
   FilesetResolver,
   DrawingUtils,
 } from "@mediapipe/tasks-vision";
+import { GLASSES_EYEDISTANCE_MULTIPLIER_3D } from "@/app/utils/config";
+import { computeAdvancedRotation } from "@/app/utils/advancedRotation";
+import {
+  calculatePitchYOffset,
+  calculatePitchZOffset,
+} from "@/app/utils/pitchPositionOffset";
 
 let faceLandmarker = null;
 let lastVideoTime = -1;
@@ -105,7 +111,6 @@ function computeGlassesTransform(landmarks) {
   eyeMid.y -= 0.035;
   eyeMid.z += 0;
   // 2. Scale
-  const GLASSES_EYEDISTANCE_MULTIPLIER_3D = 0.0033;
   const scale = distance(LE2_3, RE2_3) * GLASSES_EYEDISTANCE_MULTIPLIER_3D;
   // 3. Build coordinate system
   const initialUp = normalize(sub(T3, C3));
@@ -118,53 +123,23 @@ function computeGlassesTransform(landmarks) {
     [right.y, initialUp.y, forward.y],
     [right.z, initialUp.z, forward.z],
   ];
-  // 5. Convert to quaternion (Three.js convention)
-  function matrixToQuaternion(m) {
-    // m is 3x3
-    const m00 = m[0][0],
-      m01 = m[0][1],
-      m02 = m[0][2];
-    const m10 = m[1][0],
-      m11 = m[1][1],
-      m12 = m[1][2];
-    const m20 = m[2][0],
-      m21 = m[2][1],
-      m22 = m[2][2];
-    const trace = m00 + m11 + m22;
-    let qw, qx, qy, qz;
-    if (trace > 0) {
-      let s = 0.5 / Math.sqrt(trace + 1.0);
-      qw = 0.25 / s;
-      qx = (m21 - m12) * s;
-      qy = (m02 - m20) * s;
-      qz = (m10 - m01) * s;
-    } else if (m00 > m11 && m00 > m22) {
-      let s = 2.0 * Math.sqrt(1.0 + m00 - m11 - m22);
-      qw = (m21 - m12) / s;
-      qx = 0.25 * s;
-      qy = (m01 + m10) / s;
-      qz = (m02 + m20) / s;
-    } else if (m11 > m22) {
-      let s = 2.0 * Math.sqrt(1.0 + m11 - m00 - m22);
-      qw = (m02 - m20) / s;
-      qx = (m01 + m10) / s;
-      qy = 0.25 * s;
-      qz = (m12 + m21) / s;
-    } else {
-      let s = 2.0 * Math.sqrt(1.0 + m22 - m00 - m11);
-      qw = (m10 - m01) / s;
-      qx = (m02 + m20) / s;
-      qy = (m12 + m21) / s;
-      qz = 0.25 * s;
-    }
-    return { x: qx, y: qy, z: qz, w: qw };
-  }
-  const quaternion = matrixToQuaternion(rot);
+  // 5. Convert to quaternion using the advanced, eased method
+  const quaternion = computeAdvancedRotation(rot);
+
   // 6. Yaw for offset
   const targetYaw = Math.atan2(forward.x, forward.z);
   const forwardShift = yawZOffset(targetYaw, forward, 0.028);
   const lateralShift = yawXOffset(targetYaw, right, 0.02);
   eyeMid = add(add(eyeMid, forwardShift), lateralShift);
+
+  // 7. Pitch-based positional offset
+  const pitch = Math.asin(-rot[1][2]); // Extract pitch from rotation matrix
+  const pitchYOffset = calculatePitchYOffset(pitch);
+  const pitchZOffset = calculatePitchZOffset(pitch);
+
+  eyeMid.y -= pitchYOffset;
+  eyeMid.z -= pitchZOffset;
+
   // Return transform
   return {
     position: eyeMid,
@@ -193,6 +168,13 @@ self.onmessage = (event) => {
         type: "LANDMARKS_RESULT",
         landmarks: results.faceLandmarks,
         glassesTransform,
+      });
+    } else {
+      // Send empty result when no face is detected
+      self.postMessage({
+        type: "LANDMARKS_RESULT",
+        landmarks: [],
+        glassesTransform: null,
       });
     }
   }
