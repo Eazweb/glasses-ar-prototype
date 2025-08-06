@@ -44,8 +44,6 @@ export function calculatePitchZOffset(
   intensity = 0,
   maxPitch = 0.5,
 ): number {
-  console.log("pitch", pitch > 0);
-
   // Only apply effect when looking down (positive pitch)
   if (pitch <= 0) {
     return 0; // No Z movement when looking up

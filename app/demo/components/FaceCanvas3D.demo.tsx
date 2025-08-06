@@ -1,0 +1,134 @@
+"use client";
+import React, { useEffect, useMemo } from "react";
+import { Canvas } from "@react-three/fiber";
+import { Environment, OrbitControls, Stats } from "@react-three/drei";
+import * as THREE from "three";
+import { convertLandmarks3D } from "@/app/utils/landmarkConversion";
+
+import { FaceOccluder } from "@/app/services/drawing3D/drawFaceOccluder";
+import { useVideoAspect } from "@/app/hooks/useVideoAspect";
+import { useLandmarkUpdater } from "@/app/hooks/useLandmarkUpdater";
+import { useDynamicPlane } from "@/app/hooks/useDynamicPlane";
+import { useDelayedVideoTexture } from "@/app/hooks/useDelayedVideoTexture";
+import { IS_DEV } from "@/app/utils/config";
+import { DrawGlasses3DDemo } from "./drawGlasses3D.demo";
+
+// Custom FPS counter for glasses updates
+function GlassesFPSDisplay({
+  landmarks,
+}: {
+  landmarks: { x: number; y: number; z?: number }[];
+}) {
+  const [fps, setFps] = React.useState(0);
+  const frameCountRef = React.useRef(0);
+  const lastTimeRef = React.useRef(performance.now());
+
+  React.useEffect(() => {
+    if (landmarks.length > 0) {
+      frameCountRef.current++;
+      const now = performance.now();
+      const elapsed = now - lastTimeRef.current;
+
+      if (elapsed >= 1000) {
+        // Update FPS every second
+        setFps(Math.round((frameCountRef.current * 1000) / elapsed));
+        frameCountRef.current = 0;
+        lastTimeRef.current = now;
+      }
+    }
+  }, [landmarks]);
+
+  if (!IS_DEV) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "5%",
+        right: "5%",
+        background: "rgba(0,0,0,0.7)",
+        color: "white",
+        padding: "8px 12px",
+        fontFamily: "monospace",
+        fontSize: "14px",
+        zIndex: 1000,
+      }}
+    >
+      Glasses FPS: {fps}
+    </div>
+  );
+}
+
+export default function FaceCanvas3DDemo(props: any) {
+  const {
+    videoRef,
+    videoReady,
+    landmarks,
+    glassesTransform,
+    fps,
+    onOccluderRendered,
+    onGlassesRendered,
+  } = props;
+
+  // Use custom hook for controlled FPS updates of landmarks
+  const landmarkVersion = useLandmarkUpdater(landmarks, fps);
+
+  const convertedLandmarks = useMemo(
+    () => {
+      const result = convertLandmarks3D(landmarks.current);
+      return result;
+    },
+    [landmarkVersion], // Force update when version changes
+  );
+
+  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 5);
+
+  const videoAspect = useVideoAspect(videoRef, videoReady);
+  const { planeWidth, planeHeight, FOV, cameraZ } =
+    useDynamicPlane(videoAspect);
+
+  return (
+    <>
+      <GlassesFPSDisplay landmarks={convertedLandmarks} />
+      <Canvas
+        className="absolute top-0 left-0 w-full"
+        camera={{ position: [0, 0, cameraZ], fov: FOV }}
+        gl={{
+          outputColorSpace: THREE.SRGBColorSpace,
+          toneMapping: THREE.NoToneMapping,
+        }}
+      >
+        {IS_DEV && <Stats />}
+        <group scale={[-1, 1, 1]}>
+          <Environment preset="apartment" background={false} />
+
+          {videoTexture && (
+            <mesh scale={[planeWidth, planeHeight, 1]} position={[0, 0, -0.08]}>
+              <planeGeometry />
+              <meshBasicMaterial map={videoTexture} />
+            </mesh>
+          )}
+          {/* Render landmarks using points for better performance */}
+          {convertedLandmarks.length > 0 && (
+            <>
+              <FaceOccluder
+                landmarks={convertedLandmarks}
+                onRendered={onOccluderRendered}
+              />
+
+              <DrawGlasses3DDemo
+                landmarks={convertedLandmarks}
+                glassesTransform={glassesTransform?.current}
+                onRendered={onGlassesRendered}
+                model={props.model}
+              />
+            </>
+          )}
+
+          {/* Debug */}
+          {!IS_DEV && <OrbitControls />}
+        </group>
+      </Canvas>
+    </>
+  );
+}

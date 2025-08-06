@@ -1,24 +1,25 @@
-// services/drawing3D/drawGlasses3D.tsx
+// demo/components/drawGlasses3D.demo.tsx
 import React, { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
-import { Group, MeshStandardMaterial, Mesh } from "three";
-import { useGlassesPositioning } from "../../hooks/useGlassesPositioning";
-import { useGlassesDebug } from "../../hooks/useGlassesDebug";
+import { Group } from "three";
+import { useGlassesPositioning } from "@/app/hooks/useGlassesPositioning";
 
-import { GLASSES_USED } from "@/app/utils/config";
+import { GlassesModel } from "@/app/utils/modelImports";
 
-export function DrawGlasses3D({
+export function DrawGlasses3DDemo({
   landmarks,
   glassesTransform,
   onRendered,
+  model,
 }: {
   landmarks: { x: number; y: number; z?: number }[];
   glassesTransform?: any | null;
   onRendered?: () => void;
+  model: GlassesModel;
 }) {
   const pivot = useRef<Group>(null);
 
-  const { scene } = useGLTF(GLASSES_USED.path);
+  const { scene } = useGLTF(model.path);
 
   // If glassesTransform is provided, use it directly (fast path)
   useEffect(() => {

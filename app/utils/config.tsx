@@ -1,8 +1,18 @@
+import { GLASSES_MODELS } from "./modelImports";
+
 export const GLASSES_EYEDISTANCE_MULTIPLIER_2D = 1.5;
 
 export const EYE_MARKER_RADIUS_2D = 3;
 
-export const GLASSES_EYEDISTANCE_MULTIPLIER_3D = 0.0033;
+export const GLASSES_USED = GLASSES_MODELS.cazal;
+
+export const GLASSES_EYEDISTANCE_MULTIPLIER_3D = GLASSES_USED.scale;
+
+export const GLASSES_OFFSET_3D = GLASSES_USED.offset;
+
+export const LATERAL_OFFSET_3D = 0.04;
+
+export const FORWARD_OFFSET_3D = 0.02;
 
 export const IS_DEV = process.env.NEXT_PUBLIC_ENV === "dev";
 

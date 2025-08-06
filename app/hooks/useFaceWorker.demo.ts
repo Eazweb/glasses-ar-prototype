@@ -2,11 +2,12 @@
 import { useRef, useEffect } from "react";
 import { FaceLandmarkerReturn } from "../types/faceLandmarker";
 import { FPS as TARGET_FPS } from "../utils/config";
+import { GlassesModel } from "../utils/modelImports";
 
 /**
  * Hook for face landmark detection using MediaPipe Web Worker
  */
-export function useFaceWorker(): FaceLandmarkerReturn {
+export function useFaceWorkerDemo(model: GlassesModel): FaceLandmarkerReturn {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarks = useRef<any[]>([]);
   const glassesTransform = useRef<any | null>(null);
@@ -40,7 +41,7 @@ export function useFaceWorker(): FaceLandmarkerReturn {
     (async () => {
       // Create a new worker instance from the public URL
       const worker = new Worker(
-        new URL("../workers/face.worker.js", import.meta.url),
+        new URL("../workers/face.worker.demo.js", import.meta.url),
         {
           type: "module",
         },
@@ -58,6 +59,12 @@ export function useFaceWorker(): FaceLandmarkerReturn {
         } = event.data;
         if (type === "WORKER_READY") {
           isWorkerReady.current = true;
+          // Send dynamic model parameters to the worker
+          worker.postMessage({
+            type: "SET_MODEL_PARAMS",
+            scale: model.scale,
+            offset: model.offset,
+          });
         } else if (type === "LANDMARKS_RESULT") {
           // Update the refs
           if (
@@ -157,7 +164,7 @@ export function useFaceWorker(): FaceLandmarkerReturn {
         latestBitmap.close();
       }
     };
-  }, []);
+  }, [model]);
 
   return { videoRef, landmarks, glassesTransform };
 }

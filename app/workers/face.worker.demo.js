@@ -4,17 +4,16 @@ import {
   FilesetResolver,
   DrawingUtils,
 } from "@mediapipe/tasks-vision";
-import {
-  GLASSES_EYEDISTANCE_MULTIPLIER_3D,
-  GLASSES_OFFSET_3D,
-  LATERAL_OFFSET_3D,
-  FORWARD_OFFSET_3D,
-} from "@/app/utils/config";
+// Dynamic model params (default values will be overwritten by main thread)
+let GLASSES_EYEDISTANCE_MULTIPLIER_3D = 1.0;
+let GLASSES_OFFSET_3D = { x: 0, y: 0, z: 0 };
 import { computeAdvancedRotation } from "@/app/utils/advancedRotation";
 import {
   calculatePitchYOffset,
   calculatePitchZOffset,
 } from "@/app/utils/pitchPositionOffset";
+
+import { LATERAL_OFFSET_3D, FORWARD_OFFSET_3D } from "@/app/utils/config";
 
 let faceLandmarker = null;
 let lastVideoTime = -1;
@@ -159,7 +158,15 @@ function computeGlassesTransform(landmarks) {
 
 // Listen for messages from the main thread
 self.onmessage = (event) => {
-  const { type, videoFrame } = event.data;
+  const { type, videoFrame, scale, offset } = event.data;
+
+  if (type === "SET_MODEL_PARAMS") {
+    if (typeof scale === "number" && offset) {
+      GLASSES_EYEDISTANCE_MULTIPLIER_3D = scale;
+      GLASSES_OFFSET_3D = offset;
+    }
+    return;
+  }
 
   if (type === "VIDEO_FRAME") {
     if (!faceLandmarker) return;
