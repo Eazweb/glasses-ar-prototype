@@ -1,10 +1,14 @@
 // demo/components/drawGlasses3D.demo.tsx
 import React, { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
-import { Group } from "three";
+import { Group, Vector3, Quaternion } from "three";
+import { useFrame } from "@react-three/fiber";
 import { useGlassesPositioning } from "@/app/hooks/useGlassesPositioning";
 
 import { GlassesModel } from "@/app/utils/modelImports";
+
+// LERP factor for smooth animation
+const LERP_FACTOR = 0.65;
 
 export function DrawGlasses3DDemo({
   landmarks,
@@ -17,27 +21,48 @@ export function DrawGlasses3DDemo({
   onRendered?: () => void;
   model: GlassesModel;
 }) {
-  const pivot = useRef<Group>(null);
-
+  const pivot = useRef<Group>(null!);
   const { scene } = useGLTF(model.path);
 
-  // If glassesTransform is provided, use it directly (fast path)
+  // Target values for smooth interpolation
+  const targetPosition = useRef(new Vector3());
+  const targetQuaternion = useRef(new Quaternion());
+  const targetScale = useRef(1);
+
+  // If glassesTransform is provided, update target values
   useEffect(() => {
-    if (glassesTransform && pivot.current) {
-      pivot.current.position.set(
+    if (glassesTransform) {
+      targetPosition.current.set(
         glassesTransform.position.x,
         glassesTransform.position.y,
         glassesTransform.position.z,
       );
-      pivot.current.scale.setScalar(glassesTransform.scale);
-      pivot.current.quaternion.set(
+      targetQuaternion.current.set(
         glassesTransform.quaternion.x,
         glassesTransform.quaternion.y,
         glassesTransform.quaternion.z,
         glassesTransform.quaternion.w,
       );
+      targetScale.current = glassesTransform.scale;
     }
   }, [glassesTransform]);
+
+  // Use useFrame for smooth updates synchronized with the render loop
+  useFrame(() => {
+    if (pivot.current) {
+      // Interpolate position
+      pivot.current.position.lerp(targetPosition.current, LERP_FACTOR);
+
+      // Interpolate rotation (slerp for quaternions)
+      pivot.current.quaternion.slerp(targetQuaternion.current, LERP_FACTOR);
+
+      // Interpolate scale
+      const currentScale = pivot.current.scale.x;
+      const newScale =
+        currentScale + (targetScale.current - currentScale) * LERP_FACTOR;
+      pivot.current.scale.setScalar(newScale);
+    }
+  });
 
   // Fallback to old hook if no transform is provided (slow path)
   useGlassesPositioning(landmarks, pivot, !glassesTransform);
@@ -46,7 +71,6 @@ export function DrawGlasses3DDemo({
     if (onRendered && landmarks && landmarks.length > 0) {
       onRendered();
     }
-    // Only call when landmarks change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [landmarks]);
 

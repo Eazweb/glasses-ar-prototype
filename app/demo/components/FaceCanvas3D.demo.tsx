@@ -10,7 +10,7 @@ import { useVideoAspect } from "@/app/hooks/useVideoAspect";
 import { useLandmarkUpdater } from "@/app/hooks/useLandmarkUpdater";
 import { useDynamicPlane } from "@/app/hooks/useDynamicPlane";
 import { useDelayedVideoTexture } from "@/app/hooks/useDelayedVideoTexture";
-import { IS_DEV } from "@/app/utils/config";
+import { IS_DEV, VIDEO_DELAY } from "@/app/utils/config";
 import { DrawGlasses3DDemo } from "./drawGlasses3D.demo";
 
 // Custom FPS counter for glasses updates
@@ -81,7 +81,11 @@ export default function FaceCanvas3DDemo(props: any) {
     [landmarkVersion], // Force update when version changes
   );
 
-  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 5);
+  const videoTexture = useDelayedVideoTexture(
+    videoRef,
+    videoReady,
+    VIDEO_DELAY,
+  );
 
   const videoAspect = useVideoAspect(videoRef, videoReady);
   const { planeWidth, planeHeight, FOV, cameraZ } =
@@ -126,7 +130,7 @@ export default function FaceCanvas3DDemo(props: any) {
           )}
 
           {/* Debug */}
-          {!IS_DEV && <OrbitControls />}
+          {IS_DEV && <OrbitControls />}
         </group>
       </Canvas>
     </>

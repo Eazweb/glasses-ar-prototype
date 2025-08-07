@@ -16,7 +16,7 @@ import { useVideoAspect } from "../hooks/useVideoAspect";
 import { useLandmarkUpdater } from "../hooks/useLandmarkUpdater";
 import { useDynamicPlane } from "../hooks/useDynamicPlane";
 import { useDelayedVideoTexture } from "../hooks/useDelayedVideoTexture";
-import { IS_DEV } from "../utils/config";
+import { IS_DEV, VIDEO_DELAY } from "../utils/config";
 
 // Custom FPS counter for glasses updates
 function GlassesFPSDisplay({
@@ -93,7 +93,11 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
     [landmarkVersion], // Force update when version changes
   );
 
-  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 5);
+  const videoTexture = useDelayedVideoTexture(
+    videoRef,
+    videoReady,
+    VIDEO_DELAY,
+  );
 
   const videoAspect = useVideoAspect(videoRef, videoReady);
   const { planeWidth, planeHeight, FOV, cameraZ } =

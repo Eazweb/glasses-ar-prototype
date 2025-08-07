@@ -12,11 +12,13 @@ export const GLASSES_OFFSET_3D = GLASSES_USED.offset;
 
 export const LATERAL_OFFSET_3D = 0.04;
 
-export const FORWARD_OFFSET_3D = 0.02;
+export const FORWARD_OFFSET_3D = 0.025;
 
 export const IS_DEV = process.env.NEXT_PUBLIC_ENV === "dev";
 
 export const FPS = parseInt(process.env.NEXT_PUBLIC_FPS || "45", 10);
+
+export const VIDEO_DELAY = 8;
 
 export const TRIANGULATION = [
   [127, 34, 139],

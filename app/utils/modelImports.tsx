@@ -52,13 +52,13 @@ export const GLASSES_MODELS: Record<string, GlassesModel> = {
   },
   prada_vintage_star: {
     path: "/model/models/prada_fixed_origin_compressed.glb",
-    scale: 0.65,
+    scale: 0.6,
     offset: { x: 0, y: -0.01, z: 0.07 },
   },
   ray_ban: {
     path: "/model/models/rayban_fixed_origin_compressed.glb", // almost working
     scale: 0.79,
-    offset: { x: 0, y: -0.02, z: 0.04 },
+    offset: { x: 0, y: -0.02, z: 0.05 },
   },
   sunglasses: {
     path: "/model/models/sunglasses_fixed_origin.glb",
