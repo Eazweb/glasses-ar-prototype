@@ -28,8 +28,10 @@ export default async function DemoPage({ params }: DemoPageProps) {
   }
 
   return (
-    <div className="h-screen w-screen">
-      <DemoFaceTracker model={model} />
+    <div className="flex min-h-screen flex-col items-center">
+      <div className="relative aspect-[1080/1080] w-full max-w-4xl">
+        <DemoFaceTracker model={model} />
+      </div>
     </div>
   );
 }

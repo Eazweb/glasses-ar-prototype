@@ -18,7 +18,10 @@ export const IS_DEV = process.env.NEXT_PUBLIC_ENV === "dev";
 
 export const FPS = parseInt(process.env.NEXT_PUBLIC_FPS || "45", 10);
 
-export const VIDEO_DELAY = 8;
+export const VIDEO_DELAY = parseInt(
+  process.env.NEXT_PUBLIC_VIDEO_DELAY || "5",
+  10,
+);
 
 export const TRIANGULATION = [
   [127, 34, 139],
