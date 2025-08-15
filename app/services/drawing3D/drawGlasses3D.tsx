@@ -1,25 +1,38 @@
 // services/drawing3D/drawGlasses3D.tsx
-import React, { useRef, useEffect } from "react";
-import { useGLTF } from "@react-three/drei";
+import React, { useRef, useEffect, useMemo } from "react";
 import { Group, Vector3, Quaternion } from "three";
 import { useFrame } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
 import { GLASSES_USED } from "@/app/utils/config";
 import { useGlassesPositioning } from "../../hooks/useGlassesPositioning";
+import { useAlphaFalloff, ShaderSettings } from "../../hooks/useAlphaFalloff";
 
 // LERP factor for smooth animation
 const LERP_FACTOR = 0.65;
+
+// Default shader settings to ensure original functionality is unchanged
+const defaultShaderSettings: ShaderSettings = {
+  color: "#ffffff", // Non-intrusive color
+  axis: "z",
+  fadeStartPercent: 100, // Start fade at the very top
+  fadeEndPercent: 25, // End fade at the very top (no visible fade)
+};
 
 export function DrawGlasses3D({
   landmarks,
   glassesTransform,
   onRendered,
+  shaderSettings = defaultShaderSettings, // Add shaderSettings prop with a default
 }: {
   landmarks: { x: number; y: number; z?: number }[];
   glassesTransform?: any | null;
   onRendered?: () => void;
+  shaderSettings?: ShaderSettings; // Optional prop to control the shader
 }) {
   const pivot = useRef<Group>(null!);
+  const modelGroup = useRef<Group>(null!);
   const { scene } = useGLTF(GLASSES_USED.path);
+  useAlphaFalloff(modelGroup, shaderSettings);
 
   // Target values for smooth interpolation
   const targetPosition = useRef(new Vector3());
@@ -75,7 +88,9 @@ export function DrawGlasses3D({
     <>
       {/* Glasses model anchored to pivot */}
       <group ref={pivot}>
-        <primitive object={scene} />
+        <group ref={modelGroup}>
+          <primitive object={scene} />
+        </group>
       </group>
 
       {/* Debug visualizations */}

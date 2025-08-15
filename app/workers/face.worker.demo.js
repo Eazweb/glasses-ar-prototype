@@ -14,6 +14,7 @@ import {
 } from "@/app/utils/pitchPositionOffset";
 
 import { LATERAL_OFFSET_3D, FORWARD_OFFSET_3D } from "@/app/utils/config";
+import { PLANE_SCALE } from "@/app/utils/landmarkToWorld";
 
 let faceLandmarker = null;
 let lastVideoTime = -1;
@@ -41,7 +42,6 @@ setup();
 // --- Glasses positioning math (ported from useGlassesPositioning) ---
 function computeGlassesTransform(landmarks) {
   // Utility: landmarkToWorld
-  const PLANE_SCALE = { x: 0.9, y: 0.9, z: 0.6 };
   const PLANE_Z = 0;
   function landmarkToWorld(pt) {
     return {
