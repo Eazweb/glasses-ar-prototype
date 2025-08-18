@@ -158,9 +158,17 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
           ))} */}
           {/* Show video background - fill entire viewport */}
           {videoTexture && (
-            <mesh scale={[planeWidth, planeHeight, 1]} position={[0, 0, -0.08]}>
+            <mesh
+              scale={[planeWidth, planeHeight, 1]}
+              position={[0, 0, -0.08]}
+              renderOrder={-1000}
+            >
               <planeGeometry />
-              <meshBasicMaterial map={videoTexture} />
+              <meshBasicMaterial
+                map={videoTexture}
+                depthWrite={false}
+                depthTest={false}
+              />
             </mesh>
           )}
           {/* Render landmarks using points for better performance */}

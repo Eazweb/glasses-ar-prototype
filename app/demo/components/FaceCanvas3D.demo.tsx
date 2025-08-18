@@ -59,6 +59,67 @@ function GlassesFPSDisplay({
   );
 }
 
+// Distance display component for debugging (reads from worker distanceInfo)
+function DistanceDisplay({
+  distanceInfo,
+}: {
+  distanceInfo?: {
+    ratio: number;
+    staticRatio?: number;
+    raw: number;
+    baseline: number;
+    yawAbs: number;
+    rangeM?: number;
+  };
+}) {
+  if (!IS_DEV) return null;
+
+  const ratioDyn = distanceInfo?.ratio ?? 1.0;
+  const ratioStatic = distanceInfo?.staticRatio ?? ratioDyn;
+  const rangeM = distanceInfo?.rangeM;
+
+  // Prefer absolute meters if available; else use static calibrated ratio
+  let distanceCategory = "Medium";
+  if (typeof rangeM === "number" && !Number.isNaN(rangeM)) {
+    // Thresholds in meters tuned per feedback
+    // Very Close ~0.4m, Medium centered ~0.8m, Far centered ~0.9m
+    if (rangeM < 0.45) distanceCategory = "Very Close";
+    else if (rangeM < 0.7) distanceCategory = "Close";
+    else if (rangeM < 0.85) distanceCategory = "Medium";
+    else if (rangeM < 1.1) distanceCategory = "Far";
+    else distanceCategory = "Very Far";
+  } else {
+    // Fallback to calibrated static ratio (non-converging)
+    if (ratioStatic > 1.4) distanceCategory = "Very Close";
+    else if (ratioStatic > 1.2) distanceCategory = "Close";
+    else if (ratioStatic > 0.9) distanceCategory = "Medium";
+    else if (ratioStatic > 0.7) distanceCategory = "Far";
+    else distanceCategory = "Very Far";
+  }
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "20%",
+        right: "5%",
+        background: "rgba(0,0,0,0.7)",
+        color: "white",
+        padding: "8px 12px",
+        fontFamily: "monospace",
+        fontSize: "14px",
+        zIndex: 1000,
+      }}
+    >
+      Distance: {distanceCategory}
+      <br />
+      {typeof rangeM === "number" && !Number.isNaN(rangeM)
+        ? `Range: ${rangeM.toFixed(2)} m`
+        : `Ratio: ${ratioStatic.toFixed(2)}`}
+    </div>
+  );
+}
+
 export default function FaceCanvas3DDemo(props: any) {
   const {
     videoRef,
@@ -94,6 +155,7 @@ export default function FaceCanvas3DDemo(props: any) {
   return (
     <>
       <GlassesFPSDisplay landmarks={convertedLandmarks} />
+      <DistanceDisplay distanceInfo={glassesTransform?.current?.distanceInfo} />
       <Canvas
         className="absolute top-0 left-0 w-full"
         camera={{ position: [0, 0, cameraZ], fov: FOV }}
@@ -107,9 +169,17 @@ export default function FaceCanvas3DDemo(props: any) {
           <Environment preset="apartment" background={false} />
 
           {videoTexture && (
-            <mesh scale={[planeWidth, planeHeight, 1]} position={[0, 0, -0.08]}>
+            <mesh
+              scale={[planeWidth, planeHeight, 1]}
+              position={[0, 0, -0.08]}
+              renderOrder={-1000}
+            >
               <planeGeometry />
-              <meshBasicMaterial map={videoTexture} />
+              <meshBasicMaterial
+                map={videoTexture}
+                depthWrite={false}
+                depthTest={false}
+              />
             </mesh>
           )}
           {/* Render landmarks using points for better performance */}

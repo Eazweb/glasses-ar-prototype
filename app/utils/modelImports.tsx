@@ -12,8 +12,8 @@ export const GLASSES_MODELS: Record<string, GlassesModel> = {
   },
   black_sunglasses: {
     path: "/model/models/black_sunglasses_fixed_origin_decimated.glb", // working
-    scale: 12,
-    offset: { x: 0, y: -0.01, z: 0.03 },
+    scale: 11,
+    offset: { x: 0, y: -0.02, z: 0.05 },
   },
   black_frame: {
     path: "/model/models/black_frame_fixed_origin.glb", // working

@@ -15,9 +15,55 @@ import {
 
 import { LATERAL_OFFSET_3D, FORWARD_OFFSET_3D } from "@/app/utils/config";
 import { PLANE_SCALE } from "@/app/utils/landmarkToWorld";
+import {
+  computeDistanceOffsets,
+  DEFAULT_DISTANCE_OFFSET_ANCHORS,
+} from "@/app/utils/distanceOffsets";
 
 let faceLandmarker = null;
 let lastVideoTime = -1;
+
+// Distance-aware scaling state (robust to yaw)
+let eyeDistBaseline = 0;
+let eyeDistBaselineReady = false;
+const EYE_EWMA_ALPHA = 0.02; // slow, stable baseline updates
+const DIST_GAIN_MIN = 0.7;
+const DIST_GAIN_MAX = 1.5;
+let lastDistanceGain = 1.0;
+const GAIN_MAX_STEP = 0.05; // limit gain change per frame
+const YAW_BASELINE_MAX = 0.35; // ~20 degrees in radians
+
+// Absolute range estimation (pinhole model, approximate)
+const APPROX_HFOV_DEG = 65; // tweak per device if needed
+const IPD_M = 0.063; // average interpupillary distance in meters
+
+// Static calibration for UI (non-converging)
+let calibReady = false;
+let calibMean = 0;
+let calibM2 = 0; // variance accumulator
+let calibCount = 0;
+const CALIB_MIN_FRAMES = 25;
+const CALIB_YAW_MAX = 0.25; // ~14 degrees
+const CALIB_REL_STD_MAX = 0.06; // 6% relative std-dev tolerance
+
+function calibUpdate(value, yawAbs) {
+  if (calibReady) return;
+  if (yawAbs > CALIB_YAW_MAX) return; // only frontal-ish
+  calibCount += 1;
+  // Welford's online variance
+  const delta = value - calibMean;
+  calibMean += delta / calibCount;
+  const delta2 = value - calibMean;
+  calibM2 += delta * delta2;
+  if (calibCount >= CALIB_MIN_FRAMES) {
+    const variance = calibM2 / (calibCount - 1);
+    const std = Math.sqrt(Math.max(variance, 0));
+    const relStd = calibMean > 1e-6 ? std / calibMean : 1;
+    if (relStd < CALIB_REL_STD_MAX) {
+      calibReady = true; // lock calibration
+    }
+  }
+}
 
 // Initialize the FaceLandmarker model
 async function setup() {
@@ -40,7 +86,7 @@ async function setup() {
 setup();
 
 // --- Glasses positioning math (ported from useGlassesPositioning) ---
-function computeGlassesTransform(landmarks) {
+function computeGlassesTransform(landmarks, frameW, frameH) {
   // Utility: landmarkToWorld
   const PLANE_Z = 0;
   function landmarkToWorld(pt) {
@@ -71,7 +117,7 @@ function computeGlassesTransform(landmarks) {
       z: right.z * eased * intensity,
     };
   }
-  // Math
+  // Math (use original normalized landmarks for pixel measures too)
   const LE2_3 = landmarkToWorld(landmarks[224]);
   const RE2_3 = landmarkToWorld(landmarks[444]);
   const LE2 = landmarkToWorld(landmarks[133]);
@@ -80,9 +126,6 @@ function computeGlassesTransform(landmarks) {
   const C3 = landmarkToWorld(landmarks[175]);
   if (!T3 || !C3 || !LE2_3 || !RE2_3 || !LE2 || !RE2) return null;
   // Vector math
-  function vec3(a) {
-    return [a.x, a.y, a.z];
-  }
   function sub(a, b) {
     return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
   }
@@ -134,13 +177,70 @@ function computeGlassesTransform(landmarks) {
   // 5. Convert to quaternion using the advanced, eased method
   const quaternion = computeAdvancedRotation(rot);
 
-  // 6. Yaw for offset
+  // 6. Yaw for offset (and distance-aware scaling)
   const targetYaw = Math.atan2(forward.x, forward.z);
-  const forwardShift = yawZOffset(targetYaw, forward, FORWARD_OFFSET_3D);
-  const lateralShift = yawXOffset(targetYaw, right, LATERAL_OFFSET_3D);
+
+  // Robust inter-ocular distance in world (for scaling gain)
+  const eyeVecWorld = sub(RE2_3, LE2_3);
+  const eyeDistProj = Math.abs(
+    eyeVecWorld.x * right.x + eyeVecWorld.y * right.y + eyeVecWorld.z * right.z,
+  );
+
+  // Update baseline only when yaw is small; taper alpha with yaw
+  const yawAbs = Math.abs(targetYaw);
+  const yawWeight = Math.max(0, 1 - yawAbs / YAW_BASELINE_MAX); // 1→0 as yaw grows
+  const alpha = EYE_EWMA_ALPHA * yawWeight;
+
+  // Update static calibration (non-converging) for UI
+  calibUpdate(eyeDistProj, yawAbs);
+
+  if (!eyeDistBaselineReady) {
+    eyeDistBaseline = eyeDistProj;
+    eyeDistBaselineReady = true;
+  } else if (alpha > 0) {
+    eyeDistBaseline += alpha * (eyeDistProj - eyeDistBaseline);
+  }
+
+  // Distance gain with clamp and rate limit (for offsets)
+  const rawGain = eyeDistBaseline > 1e-6 ? eyeDistProj / eyeDistBaseline : 1.0;
+  const clampedGain = Math.min(DIST_GAIN_MAX, Math.max(DIST_GAIN_MIN, rawGain));
+  const deltaGain = clampedGain - lastDistanceGain;
+  const limitedGain =
+    lastDistanceGain +
+    Math.max(-GAIN_MAX_STEP, Math.min(GAIN_MAX_STEP, deltaGain));
+  lastDistanceGain = limitedGain;
+
+  // 7. Absolute distance estimate (meters) using pinhole model with yaw correction
+  // Use original normalized landmark positions for pixel measure
+  const leN = landmarks[133];
+  const reN = landmarks[463];
+  let rangeM = NaN;
+  if (leN && reN && frameW && frameH) {
+    const dxPx = (reN.x - leN.x) * frameW;
+    const dyPx = (reN.y - leN.y) * frameH;
+    const eyeDistPx = Math.hypot(dxPx, dyPx);
+    const cosYaw = Math.max(0.3, Math.cos(targetYaw)); // avoid blow-ups
+    const eyeDistPxCorrected = eyeDistPx / cosYaw; // undo yaw foreshortening
+    const hfovRad = (APPROX_HFOV_DEG * Math.PI) / 180;
+    const fPx = (0.5 * frameW) / Math.tan(hfovRad / 2);
+    rangeM = (fPx * IPD_M) / Math.max(1e-3, eyeDistPxCorrected);
+    // Clamp to a sensible range
+    rangeM = Math.max(0.2, Math.min(3.5, rangeM));
+  }
+
+  // 8. Apply distance-offset mapping (smooth interpolation between anchors)
+  // Keep simple defaults; user will tweak anchors in DEFAULT_DISTANCE_OFFSET_ANCHORS.
+  const { forward: forwardOffset, lateral: lateralOffset } =
+    computeDistanceOffsets(
+      typeof rangeM === "number" && !Number.isNaN(rangeM) ? rangeM : NaN,
+      DEFAULT_DISTANCE_OFFSET_ANCHORS,
+    );
+
+  const forwardShift = yawZOffset(targetYaw, forward, forwardOffset);
+  const lateralShift = yawXOffset(targetYaw, right, lateralOffset);
   eyeMid = add(add(eyeMid, forwardShift), lateralShift);
 
-  // 7. Pitch-based positional offset
+  // 9. Pitch-based positional offset
   const pitch = Math.asin(-rot[1][2]); // Extract pitch from rotation matrix
   const pitchYOffset = calculatePitchYOffset(pitch);
   const pitchZOffset = calculatePitchZOffset(pitch);
@@ -148,11 +248,24 @@ function computeGlassesTransform(landmarks) {
   eyeMid.y -= pitchYOffset;
   eyeMid.z -= pitchZOffset;
 
-  // Return transform
+  // Return transform and distance info for UI/debug
+  // Prefer static calibration ratio (non-converging) when ready; fallback to dynamic ratio
+  const staticRatio =
+    calibReady && calibMean > 1e-6 ? eyeDistProj / calibMean : lastDistanceGain;
+  const distanceInfo = {
+    ratio: lastDistanceGain, // dynamic (for offsets)
+    staticRatio, // static (for UI)
+    raw: eyeDistProj, // world-projected width (robust)
+    baseline: eyeDistBaseline,
+    yawAbs,
+    rangeM, // absolute distance estimate (meters)
+  };
+
   return {
     position: eyeMid,
     scale,
     quaternion,
+    distanceInfo,
   };
 }
 
@@ -170,15 +283,16 @@ self.onmessage = (event) => {
 
   if (type === "VIDEO_FRAME") {
     if (!faceLandmarker) return;
-
     const nowInMs = Date.now();
-    // Always run detection on every frame
+    // Always run detection on every frame, use provided timestamp if available
     const results = faceLandmarker.detectForVideo(videoFrame, nowInMs);
     // Post the detected landmarks back to the main thread
     if (results.faceLandmarks.length > 0) {
-      // Compute glasses transform
+      // Compute glasses transform (pass frame dimensions for absolute distance)
       const glassesTransform = computeGlassesTransform(
         results.faceLandmarks[0],
+        videoFrame && videoFrame.width ? videoFrame.width : undefined,
+        videoFrame && videoFrame.height ? videoFrame.height : undefined,
       );
       self.postMessage({
         type: "LANDMARKS_RESULT",
