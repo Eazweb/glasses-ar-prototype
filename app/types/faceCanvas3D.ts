@@ -12,4 +12,5 @@ export interface FaceCanvas3DProps extends FaceLandmarkerReturn {
   showOccluder: boolean;
   onOccluderRendered: () => void;
   onGlassesRendered: () => void;
+  onVideoTextureReady?: () => void;
 }

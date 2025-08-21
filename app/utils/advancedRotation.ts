@@ -4,9 +4,57 @@
  */
 
 // --- CONFIGURATION ---
-const PITCH_SETTINGS = { multiplier: 1.4, ease: "linear" };
-const YAW_SETTINGS = { multiplier: 0.9, ease: "out-quad" };
+const PITCH_SETTINGS = { multiplier: 1, ease: "points-pitch" };
+export const YAW_SETTINGS = { multiplier: 1, ease: "points-yaw" } as const;
 const ROLL_SETTINGS = { multiplier: 1.0, ease: "linear" };
+
+// Editable point curve for yaw mapping (t in [0..1] -> v in [0..1])
+// Start with identity; add midpoints as you learn better values.
+export const YAW_POINT_CURVE: { t: number; v: number }[] = [
+  { t: 0, v: 0 },
+  { t: 0.05, v: 0.08 },
+  { t: 0.15, v: 0.2 },
+  { t: 0.35, v: 0.43 },
+  // { t: 0.75, v: 0.85 },
+  { t: 1, v: 1 },
+];
+
+// Editable point curve for pitch mapping (t in [0..1] -> v in [0..1])
+// Keep identity by default; add points as you iterate.
+export const PITCH_POINT_CURVE: { t: number; v: number }[] = [
+  { t: 0, v: 0 },
+  // { t: 0.2, v: 0.18 },
+  // { t: 0.5, v: 0.52 },
+  // { t: 0.8, v: 0.86 },
+  { t: 1, v: 1 },
+];
+
+function clamp01(n: number) {
+  return n < 0 ? 0 : n > 1 ? 1 : n;
+}
+
+function evalPointCurve(t: number, points: { t: number; v: number }[]) {
+  if (!points || points.length === 0) return t;
+  // Ensure endpoints exist and sort by t
+  const pts = [...points]
+    .concat(points.some((p) => p.t === 0) ? [] : [{ t: 0, v: 0 }])
+    .concat(points.some((p) => p.t === 1) ? [] : [{ t: 1, v: 1 }])
+    .sort((a, b) => a.t - b.t);
+
+  const tt = clamp01(t);
+  // Find segment
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    if (tt >= a.t && tt <= b.t) {
+      const span = b.t - a.t || 1e-6;
+      const k = (tt - a.t) / span;
+      // Linear interpolation between v's
+      return a.v + (b.v - a.v) * k;
+    }
+  }
+  return tt;
+}
 
 // --- EASING FUNCTIONS ---
 
@@ -19,6 +67,10 @@ const Easing = {
   "in-quad": (t: number) => t * t,
   "out-quad": (t: number) => t * (2 - t),
   "in-out-quad": (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
+  // Point-based curve for trial-and-error yaw tuning
+  "points-yaw": (t: number) => evalPointCurve(t, YAW_POINT_CURVE),
+  // Point-based curve for trial-and-error pitch tuning
+  "points-pitch": (t: number) => evalPointCurve(t, PITCH_POINT_CURVE),
 };
 
 /**
@@ -37,6 +89,39 @@ function applyEasedRotation(
   const normalizedAngle = Math.abs(angle) / (Math.PI / 2); // Normalize to [0, 1] relative to 90 degrees
   const easedT = Easing[ease](Math.min(normalizedAngle, 1));
   return sign * easedT * (Math.PI / 2) * multiplier;
+}
+
+// Helper for on-screen debug: compute normalized t and mapped v for yaw
+export function getYawMappingDebug(angle: number) {
+  const sign = Math.sign(angle);
+  const t = clamp01(Math.abs(angle) / (Math.PI / 2));
+  const v = Easing[YAW_SETTINGS.ease as keyof typeof Easing](t);
+  const finalAngle = sign * v * (Math.PI / 2) * YAW_SETTINGS.multiplier;
+  return {
+    t,
+    v,
+    finalAngle,
+    ease: YAW_SETTINGS.ease,
+    multiplier: YAW_SETTINGS.multiplier,
+    pointsCount: YAW_POINT_CURVE.length,
+  } as const;
+}
+
+// Helper for on-screen debug: compute normalized t and mapped v for pitch
+export function getPitchMappingDebug(angle: number) {
+  const sign = Math.sign(angle);
+  const t = clamp01(Math.abs(angle) / (Math.PI / 2));
+  const easeKey = (PITCH_SETTINGS.ease as keyof typeof Easing) || "linear";
+  const v = Easing[easeKey](t);
+  const finalAngle = sign * v * (Math.PI / 2) * PITCH_SETTINGS.multiplier;
+  return {
+    t,
+    v,
+    finalAngle,
+    ease: PITCH_SETTINGS.ease,
+    multiplier: PITCH_SETTINGS.multiplier,
+    pointsCount: PITCH_POINT_CURVE.length,
+  } as const;
 }
 
 // --- CORE ROTATION LOGIC ---

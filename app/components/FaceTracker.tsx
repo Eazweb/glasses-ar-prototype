@@ -57,9 +57,10 @@ export default function FaceTracker() {
   // Use custom hook for texture version management
   const videoTextureVersion = useTextureVersion(mode);
 
+  const [videoTextureReady, setVideoTextureReady] = useState(false);
   const loading = IS_DEV
     ? false
-    : !(videoReady && occluderReady && glassesReady);
+    : !(videoReady && occluderReady && glassesReady && videoTextureReady);
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center">
@@ -69,16 +70,25 @@ export default function FaceTracker() {
         </div>
       )}
 
-      {/* always hidden video (hook uses it) */}
-      <video ref={videoRef} className="hidden" muted playsInline autoPlay />
-
-      {/* Loader overlay */}
-      {loading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-neutral-950">
+      {/* Blur video + overlay with smooth fade */}
+      <div
+        className={
+          "absolute inset-0 z-50 transition-opacity duration-200 ease-out " +
+          (loading ? "opacity-100" : "pointer-events-none opacity-0")
+        }
+      >
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full scale-x-[-1] object-cover blur-sm"
+          muted
+          playsInline
+          autoPlay
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="size-14 animate-spin rounded-full border-t-4 border-b-4 border-white"></div>
           <span className="ml-4 text-xl text-white">Loading...</span>
         </div>
-      )}
+      </div>
 
       {/* 2D canvas */}
       {IS_DEV && mode === "2D" && (
@@ -132,6 +142,7 @@ export default function FaceTracker() {
             showGrid={IS_DEV ? overlays3D.showGrid : false}
             onOccluderRendered={onOccluderRendered}
             onGlassesRendered={onGlassesRendered}
+            onVideoTextureReady={() => setVideoTextureReady(true)}
           />
           {IS_DEV && (
             <OverlayControls

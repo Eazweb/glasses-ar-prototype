@@ -72,6 +72,10 @@ export function useDelayedVideoTexture(
       frameCount++;
       // Draw current video frame to the canvas to get its data
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // Ensure the texture shows something immediately before the delay buffer fills
+      if (frameBuffer.length <= delayInFrames) {
+        texture.needsUpdate = true;
+      }
       try {
         const currentFrame = ctx.getImageData(
           0,

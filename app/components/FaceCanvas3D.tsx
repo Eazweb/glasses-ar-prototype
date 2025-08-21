@@ -98,6 +98,13 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
     videoReady,
     VIDEO_DELAY,
   );
+  const videoTextureFirstFrameRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!videoTextureFirstFrameRef.current && videoTexture) {
+      videoTextureFirstFrameRef.current = true;
+      props.onVideoTextureReady?.();
+    }
+  }, [videoTexture, props]);
 
   const videoAspect = useVideoAspect(videoRef, videoReady);
   const { planeWidth, planeHeight, FOV, cameraZ } =
@@ -111,8 +118,12 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
         className="absolute top-0 left-0 w-full"
         camera={{ position: [0, 0, cameraZ], fov: FOV }}
         gl={{
+          alpha: true,
           outputColorSpace: THREE.SRGBColorSpace,
           toneMapping: THREE.NoToneMapping,
+        }}
+        onCreated={({ gl }) => {
+          gl.setClearColor(0x000000, 0);
         }}
       >
         {IS_DEV && <Stats />}
@@ -160,7 +171,7 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
           {videoTexture && (
             <mesh
               scale={[planeWidth, planeHeight, 1]}
-              position={[0, 0, -0.08]}
+              position={[0, 0, 0]}
               renderOrder={-1000}
             >
               <planeGeometry />

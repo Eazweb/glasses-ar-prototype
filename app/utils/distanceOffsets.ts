@@ -12,7 +12,7 @@ export type ComputeOffsetsOptions = {
 // Default anchors (no-op: all values match current config so behavior is unchanged until you tweak)
 // Tweak these in dev to tune feel per distance.
 export const DEFAULT_DISTANCE_OFFSET_ANCHORS: DistanceOffsetAnchor[] = [
-  { distanceM: 0.45, forward: 0.035, lateral: 0.07 }, // Very Close
+  { distanceM: 0.5, forward: 0.035, lateral: 0.08 }, // Very Close
   // Extra increments between Very Close (0.45) and Medium (0.85)
   { distanceM: 0.55, forward: 0.025, lateral: 0.055 }, // VC+1
   { distanceM: 0.65, forward: 0.022, lateral: 0.05 }, // VC+2

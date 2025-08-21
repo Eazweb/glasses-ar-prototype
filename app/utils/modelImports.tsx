@@ -7,22 +7,22 @@ export interface GlassesModel {
 export const GLASSES_MODELS: Record<string, GlassesModel> = {
   aviator_sunglasses: {
     path: "/model/models/aviator_fixed_origin.glb", // checked origin in blender, origin issue persists
-    scale: 0.088,
+    scale: 0.1,
     offset: { x: 0, y: -0.01, z: 0.02 },
   },
   black_sunglasses: {
     path: "/model/models/black_sunglasses_fixed_origin_decimated.glb", // working
-    scale: 11,
+    scale: 13,
     offset: { x: 0, y: -0.02, z: 0.05 },
   },
   black_frame: {
     path: "/model/models/black_frame_fixed_origin.glb", // working
     scale: 12,
-    offset: { x: 0, y: 0, z: 0.03 },
+    offset: { x: 0, y: 0, z: 0.07 },
   },
   cazal: {
     path: "/model/models/cazal_fixed_origin.glb", // working
-    scale: 7,
+    scale: 8,
     offset: { x: 0, y: 0, z: 0.05 },
   },
   chrome: {
@@ -32,7 +32,7 @@ export const GLASSES_MODELS: Record<string, GlassesModel> = {
   },
   dwi_sunglasses: {
     path: "/model/models/dwi_sunglasses_fixed_origin.glb",
-    scale: 0.012,
+    scale: 0.013,
     offset: { x: 0, y: -0.01, z: 0.035 },
   },
   glasses_1: {
@@ -57,23 +57,23 @@ export const GLASSES_MODELS: Record<string, GlassesModel> = {
   },
   prada_vintage_star: {
     path: "/model/models/prada_fixed_origin_compressed.glb",
-    scale: 0.6,
+    scale: 0.72,
     offset: { x: 0, y: -0.01, z: 0.07 },
   },
   ray_ban: {
     path: "/model/models/rayban_fixed_origin_compressed_decimated.glb", // almost working
-    scale: 0.79,
+    scale: 0.92,
     offset: { x: 0, y: -0.02, z: 0.05 },
   },
   sunglasses: {
     path: "/model/models/sunglasses_fixed_origin.glb",
-    scale: 2.5,
+    scale: 2.8,
     offset: { x: 0, y: -0.02, z: 0.06 },
   },
   white_gold_sunglass: {
     path: "/model/models/white_gold_sunglasses_fixed_origin_compressed_decimated.glb", // almost working
-    scale: 11.5,
-    offset: { x: 0, y: 0, z: 0.03 },
+    scale: 13,
+    offset: { x: 0, y: 0, z: 0.05 },
   },
 };
 
