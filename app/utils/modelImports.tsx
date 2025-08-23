@@ -6,9 +6,14 @@ export interface GlassesModel {
 
 export const GLASSES_MODELS: Record<string, GlassesModel> = {
   aviator_sunglasses: {
-    path: "/model/models/aviator_fixed_origin.glb", // checked origin in blender, origin issue persists
-    scale: 0.1,
-    offset: { x: 0, y: -0.01, z: 0.02 },
+    path: "/model/models/aviator_fixed_origin2.glb", // checked origin in blender, origin issue persists
+    scale: 13,
+    offset: { x: 0, y: -0.04, z: 0.03 },
+  },
+  balenciaga: {
+    path: "/model/models/balenciaga_origin_fixed.glb", // working
+    scale: 0.6,
+    offset: { x: 0, y: -0.02, z: 0.03 },
   },
   black_sunglasses: {
     path: "/model/models/black_sunglasses_fixed_origin_decimated.glb", // working
@@ -54,6 +59,11 @@ export const GLASSES_MODELS: Record<string, GlassesModel> = {
     path: "/model/models/glasses.glb",
     scale: 0.003,
     offset: { x: 0, y: -0.18, z: -0.15 },
+  },
+  fn_glasses: {
+    path: "/model/models/fnglasses_origin_fixed.glb",
+    scale: 0.42,
+    offset: { x: 0, y: -0.02, z: 0.02 },
   },
   prada_vintage_star: {
     path: "/model/models/prada_fixed_origin_compressed.glb",
