@@ -1,37 +1,40 @@
-// services/drawing3D/drawGlasses3D.tsx
-import React, { useRef, useEffect, useMemo } from "react";
+// demo/components/drawGlasses3D.demo.tsx
+import React, { useRef, useEffect } from "react";
+import { useGLTF } from "@react-three/drei";
 import { Group, Vector3, Quaternion } from "three";
 import { useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
-import { GLASSES_USED } from "@/app/utils/config";
-import { useGlassesPositioning } from "../../hooks/useGlassesPositioning";
-import { useAlphaFalloff, ShaderSettings } from "../../hooks/useAlphaFalloff";
+import { useGlassesPositioning } from "@/app/hooks/useGlassesPositioning";
+import { useAlphaFalloff, ShaderSettings } from "@/app/hooks/useAlphaFalloff";
+
+import { GlassesModel } from "@/app/utils/modelImports";
 
 // LERP factor for smooth animation
 const LERP_FACTOR = 0.65;
 
-// Default shader settings to ensure original functionality is unchanged
+// Default shader settings to demo the fade safely
 const defaultShaderSettings: ShaderSettings = {
-  color: "#ffffff", // Non-intrusive color
+  color: "#ffffff",
   axis: "z",
-  fadeStartPercent: 100, // Start fade at the very top
-  fadeEndPercent: 25, // End fade at the very top (no visible fade)
+  fadeStartPercent: 100,
+  fadeEndPercent: 25,
 };
 
-export function DrawGlasses3D({
+export function DrawGlasses3DDemo({
   landmarks,
   glassesTransform,
   onRendered,
-  shaderSettings = defaultShaderSettings, // Add shaderSettings prop with a default
+  model,
+  shaderSettings = defaultShaderSettings,
 }: {
   landmarks: { x: number; y: number; z?: number }[];
   glassesTransform?: any | null;
   onRendered?: () => void;
-  shaderSettings?: ShaderSettings; // Optional prop to control the shader
+  model: GlassesModel;
+  shaderSettings?: ShaderSettings;
 }) {
   const pivot = useRef<Group>(null!);
   const modelGroup = useRef<Group>(null!);
-  const { scene } = useGLTF(GLASSES_USED.path);
+  const { scene } = useGLTF(model.path);
   useAlphaFalloff(modelGroup, shaderSettings);
 
   // Target values for smooth interpolation
@@ -81,14 +84,6 @@ export function DrawGlasses3D({
     if (onRendered && landmarks && landmarks.length > 0) {
       onRendered();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [landmarks]);
-
-  useEffect(() => {
-    if (onRendered && landmarks && landmarks.length > 0) {
-      onRendered();
-    }
-    // Only call when landmarks change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [landmarks]);
 

@@ -16,7 +16,7 @@ import { useVideoAspect } from "../hooks/useVideoAspect";
 import { useLandmarkUpdater } from "../hooks/useLandmarkUpdater";
 import { useDynamicPlane } from "../hooks/useDynamicPlane";
 import { useDelayedVideoTexture } from "../hooks/useDelayedVideoTexture";
-import { IS_DEV } from "../utils/config";
+import { IS_DEV, VIDEO_DELAY } from "../utils/config";
 
 // Custom FPS counter for glasses updates
 function GlassesFPSDisplay({
@@ -93,7 +93,18 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
     [landmarkVersion], // Force update when version changes
   );
 
-  const videoTexture = useDelayedVideoTexture(videoRef, videoReady, 10);
+  const videoTexture = useDelayedVideoTexture(
+    videoRef,
+    videoReady,
+    VIDEO_DELAY,
+  );
+  const videoTextureFirstFrameRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!videoTextureFirstFrameRef.current && videoTexture) {
+      videoTextureFirstFrameRef.current = true;
+      props.onVideoTextureReady?.();
+    }
+  }, [videoTexture, props]);
 
   const videoAspect = useVideoAspect(videoRef, videoReady);
   const { planeWidth, planeHeight, FOV, cameraZ } =
@@ -107,8 +118,12 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
         className="absolute top-0 left-0 w-full"
         camera={{ position: [0, 0, cameraZ], fov: FOV }}
         gl={{
+          alpha: true,
           outputColorSpace: THREE.SRGBColorSpace,
           toneMapping: THREE.NoToneMapping,
+        }}
+        onCreated={({ gl }) => {
+          gl.setClearColor(0x000000, 0);
         }}
       >
         {IS_DEV && <Stats />}
@@ -154,9 +169,17 @@ export default function FaceCanvas3D(props: FaceCanvas3DProps) {
           ))} */}
           {/* Show video background - fill entire viewport */}
           {videoTexture && (
-            <mesh scale={[planeWidth, planeHeight, 1]} position={[0, 0, -0.08]}>
+            <mesh
+              scale={[planeWidth, planeHeight, 1]}
+              position={[0, 0, 0]}
+              renderOrder={-1000}
+            >
               <planeGeometry />
-              <meshBasicMaterial map={videoTexture} />
+              <meshBasicMaterial
+                map={videoTexture}
+                depthWrite={false}
+                depthTest={false}
+              />
             </mesh>
           )}
           {/* Render landmarks using points for better performance */}

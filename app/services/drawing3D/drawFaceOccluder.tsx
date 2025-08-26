@@ -56,7 +56,7 @@ export function FaceOccluder({ landmarks, onRendered }: Props) {
 
   return (
     <mesh ref={meshRef} geometry={geometry}>
-      <meshStandardMaterial
+      <meshBasicMaterial
         colorWrite={false} // 👈 hides it from being drawn
         depthWrite={true} // 👈 makes it invisible but still blocks other objects
       />
